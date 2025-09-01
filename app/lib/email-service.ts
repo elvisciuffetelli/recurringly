@@ -44,7 +44,7 @@ class EmailService {
     });
   }
 
-  private formatCurrency(amount: number, currency: string = "EUR") {
+  private formatCurrency(amount: number) {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
       amount = 0;
     }
@@ -56,10 +56,7 @@ class EmailService {
 
   private getEmailTemplate(data: EmailNotificationData) {
     const { payment, notificationType, userName = "gentile utente" } = data;
-    const amount = this.formatCurrency(
-      payment.amount,
-      payment.subscription.currency,
-    );
+    const amount = this.formatCurrency(payment.amount);
     const dueDate = format(new Date(payment.dueDate), "MMMM dd, yyyy");
 
     const templates = {
@@ -105,7 +102,7 @@ class EmailService {
               </div>
               
               <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
-                Don't forget to mark this payment as paid in your Recurringly dashboard once you've processed it.
+                Non dimenticare di segnare questo pagamento come pagato nella dashboard di Recurringly una volta completato.
               </p>
             </div>
             
@@ -125,7 +122,7 @@ class EmailService {
             </div>
             
             <div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Hi ${userName},</p>
+              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Ciao ${userName},</p>
               
               <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 5px;">
                 <h2 style="color: #d97706; margin: 0 0 10px 0; font-size: 20px;">⏰ Pagamento in scadenza domani</h2>
@@ -177,7 +174,7 @@ class EmailService {
             </div>
             
             <div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Hi ${userName},</p>
+              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Ciao ${userName},</p>
               
               <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 5px;">
                 <h2 style="color: #1d4ed8; margin: 0 0 10px 0; font-size: 20px;">📅 Pagamento in arrivo</h2>
@@ -229,7 +226,7 @@ class EmailService {
             </div>
             
             <div style="background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Hi ${userName},</p>
+              <p style="font-size: 18px; color: #333; margin-bottom: 20px;">Ciao ${userName},</p>
               
               <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 5px;">
                 <h2 style="color: #dc2626; margin: 0 0 10px 0; font-size: 20px;">🚨 Pagamento in ritardo</h2>

@@ -23,10 +23,6 @@ export default function PaymentList() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchPayments()
-  }, [fetchPayments])
-
   const fetchPayments = useCallback(async () => {
     try {
       setLoading(true)
@@ -41,6 +37,10 @@ export default function PaymentList() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    fetchPayments()
+  }, [fetchPayments])
 
   const markAsPaid = async (paymentId: string) => {
     try {
