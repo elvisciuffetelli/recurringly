@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "../ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
+import { Card, CardContent } from "../ui/card"
 import { CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 
@@ -25,9 +25,9 @@ export default function PaymentList() {
 
   useEffect(() => {
     fetchPayments()
-  }, [])
+  }, [fetchPayments])
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/payments")
@@ -36,11 +36,11 @@ export default function PaymentList() {
         setPayments(data)
       }
     } catch (error) {
-      console.error("Error fetching payments:", error)
+      console.error("Errore nel recuperare i pagamenti:", error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const markAsPaid = async (paymentId: string) => {
     try {
@@ -52,18 +52,21 @@ export default function PaymentList() {
         // Refresh payments list
         fetchPayments()
       } else {
-        console.error("Failed to mark payment as paid")
+        console.error("Impossibile segnare il pagamento come pagato")
       }
     } catch (error) {
-      console.error("Error marking payment as paid:", error)
+      console.error("Errore nel segnare il pagamento come pagato:", error)
     }
   }
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount)
+    if (Number.isNaN(amount) || !Number.isFinite(amount)) {
+      amount = 0;
+    }
+    
+    // Simple deterministic formatting to avoid hydration issues
+    const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${formatted} €`;
   }
 
   const getStatusIcon = (status: string) => {
@@ -109,9 +112,9 @@ export default function PaymentList() {
     return (
       <div className="text-center py-8">
         <Clock className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No payments found</h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Nessun pagamento trovato</h3>
         <p className="mt-1 text-sm text-gray-500">
-          Payments will appear here once you create subscriptions.
+          I pagamenti appariranno qui una volta creati gli abbonamenti.
         </p>
       </div>
     )
@@ -130,11 +133,11 @@ export default function PaymentList() {
                     {payment.subscription.name}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Due: {format(new Date(payment.dueDate), "MMM dd, yyyy")}
+                    Scadenza: {format(new Date(payment.dueDate), "dd MMM yyyy")}
                   </p>
                   {payment.paidDate && (
                     <p className="text-sm text-gray-500">
-                      Paid: {format(new Date(payment.paidDate), "MMM dd, yyyy")}
+                      Pagato: {format(new Date(payment.paidDate), "dd MMM yyyy")}
                     </p>
                   )}
                 </div>
@@ -143,7 +146,7 @@ export default function PaymentList() {
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <p className="text-lg font-semibold">
-                    {formatCurrency(payment.amount, payment.subscription.currency)}
+                    {formatCurrency(payment.amount)}
                   </p>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
@@ -159,7 +162,7 @@ export default function PaymentList() {
                     size="sm"
                     onClick={() => markAsPaid(payment.id)}
                   >
-                    Mark as Paid
+                    Segna come Pagato
                   </Button>
                 )}
               </div>

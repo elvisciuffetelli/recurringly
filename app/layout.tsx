@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "./components/providers/session-provider";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import NotificationProvider from "./components/providers/notification-provider";
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import AuthProvider from "./components/providers/session-provider";
 import "./lib/app-initializer"; // Initialize cron jobs
 
 const geistSans = Geist({
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MySubscriptions",
+  title: "Recurringly",
   description: "Personal recurring expenses management app",
 };
 
@@ -33,9 +33,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <NotificationProvider>
-            <NuqsAdapter>
-              {children}
-            </NuqsAdapter>
+            <NuqsAdapter>{children}</NuqsAdapter>
           </NotificationProvider>
         </AuthProvider>
       </body>

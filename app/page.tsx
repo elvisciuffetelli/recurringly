@@ -51,7 +51,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <AuthenticatedLayout session={session}>
-      <Suspense fallback={<div>Loading dashboard...</div>}>
+      <Suspense fallback={<div>Caricamento dashboard...</div>}>
         <Dashboard 
           dashboardData={dashboardData}
           payments={payments}

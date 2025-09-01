@@ -1,8 +1,8 @@
-# MySubscriptions App - Feature and Database Specification
+# Recurringly App - Feature and Database Specification
 
 ## Overview
 
-MySubscriptions is a personal recurring expenses management app. It allows users to track subscriptions, tax payments, installments (like Klarna or PayPal), and other fixed or recurring expenses. Users can view dashboards with totals, categorize their expenses, and track payment history.
+Recurringly is a personal recurring expenses management app. It allows users to track subscriptions, tax payments, installments (like Klarna or PayPal), and other fixed or recurring expenses. Users can view dashboards with totals, categorize their expenses, and track payment history.
 
 ---
 

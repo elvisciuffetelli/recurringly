@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, DollarSign, Info, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, Euro, Info, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { format, isAfter, startOfMonth, endOfMonth, getYear } from "date-fns"
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs"
 
@@ -75,10 +75,10 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
           onRefresh()
         }
       } else {
-        console.error("Failed to refresh payments")
+        console.error("Impossibile aggiornare i pagamenti")
       }
     } catch (error) {
-      console.error("Error refreshing payments:", error)
+      console.error("Errore nell'aggiornamento dei pagamenti:", error)
     } finally {
       setGeneratingPayments(false)
     }
@@ -97,10 +97,10 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
           onRefresh()
         }
       } else {
-        console.error("Failed to mark payment as paid")
+        console.error("Impossibile segnare il pagamento come pagato")
       }
     } catch (error) {
-      console.error("Error marking payment as paid:", error)
+      console.error("Errore nel segnare il pagamento come pagato:", error)
     } finally {
       setLoadingPayments(prev => {
         const newSet = new Set(prev)
@@ -131,10 +131,10 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
         }
       } else {
         const errorData = await response.json()
-        console.error("Failed to mark payment as unpaid:", errorData)
+        console.error("Impossibile segnare il pagamento come non pagato:", errorData)
       }
     } catch (error) {
-      console.error("Error marking payment as unpaid:", error)
+      console.error("Errore nel segnare il pagamento come non pagato:", error)
     } finally {
       setLoadingPayments(prev => {
         const newSet = new Set(prev)
@@ -145,10 +145,13 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
   }
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount)
+    if (Number.isNaN(amount) || !Number.isFinite(amount)) {
+      amount = 0;
+    }
+    
+    // Simple deterministic formatting to avoid hydration issues
+    const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${formatted} €`;
   }
 
   const getStatusIcon = (status: string) => {
@@ -223,9 +226,9 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Payments</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Pagamenti</h2>
           <p className="text-muted-foreground">
-            Payments are automatically generated from your subscriptions
+            I pagamenti vengono generati automaticamente dai tuoi abbonamenti
           </p>
         </div>
         <Button 
@@ -236,7 +239,7 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
           className="flex items-center gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${generatingPayments ? 'animate-spin' : ''}`} />
-          {generatingPayments ? "Refreshing..." : "Refresh"}
+          {generatingPayments ? "Aggiornamento..." : "Aggiorna"}
         </Button>
       </div>
 
@@ -244,39 +247,39 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">Questo Mese</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{currentMonthPayments.length}</div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(currentMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0))} total
+              {formatCurrency(currentMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0))} totale
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
+            <CardTitle className="text-sm font-medium">In Arrivo</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{upcomingPayments.length}</div>
             <p className="text-xs text-muted-foreground">
-              Pending payments
+              Pagamenti in sospeso
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <CardTitle className="text-sm font-medium">In Ritardo</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{overduePayments.length}</div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(overduePayments.reduce((sum, p) => sum + Number(p.amount), 0))} total
+              {formatCurrency(overduePayments.reduce((sum, p) => sum + Number(p.amount), 0))} totale
             </p>
           </CardContent>
         </Card>
@@ -291,28 +294,28 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
             size="sm"
             onClick={() => setFilter("all")}
           >
-            All
+            Tutti
           </Button>
           <Button 
             variant={filter === "pending" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("pending")}
           >
-            Pending
+            In Sospeso
           </Button>
           <Button 
             variant={filter === "paid" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("paid")}
           >
-            Paid
+            Pagato
           </Button>
           <Button 
             variant={filter === "overdue" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("overdue")}
           >
-            Overdue
+            In Ritardo
           </Button>
         </div>
 
@@ -323,14 +326,14 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
             size="sm"
             onClick={() => setYearFilter("current")}
           >
-            Current & Next ({currentYear}-{nextYear})
+            Corrente e Prossimo ({currentYear}-{nextYear})
           </Button>
           <Button 
             variant={parsedYearFilter === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setYearFilter("all")}
           >
-            All Years
+            Tutti gli Anni
           </Button>
           {availableYears.map(year => (
             <Button 
@@ -349,17 +352,17 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
       {payments.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <DollarSign className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
+            <Euro className="h-12 w-12 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun pagamento trovato</h3>
             <p className="text-sm text-gray-500 text-center mb-4">
               {filter === "all" 
-                ? "Payments will appear here automatically when you create subscriptions."
-                : `No ${filter} payments at the moment.`}
+                ? "I pagamenti appariranno qui automaticamente quando crei abbonamenti."
+                : `Nessun pagamento ${filter === 'pending' ? 'in sospeso' : filter === 'paid' ? 'pagato' : filter === 'overdue' ? 'in ritardo' : filter} al momento.`}
             </p>
             {filter === "all" && (
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <Info className="h-4 w-4" />
-                <span>Payments are auto-generated from active subscriptions</span>
+                <span>I pagamenti vengono generati automaticamente dagli abbonamenti attivi</span>
               </div>
             )}
           </CardContent>
@@ -387,12 +390,12 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
                         <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          <span>{formatCurrency(payment.amount, payment.subscription.currency)}</span>
+                          <Euro className="h-4 w-4 mr-1" />
+                          <span>{formatCurrency(payment.amount)}</span>
                         </div>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span>Due: {format(new Date(payment.dueDate), "MMM dd, yyyy")}</span>
+                          <span>Scadenza: {format(new Date(payment.dueDate), "dd MMM yyyy")}</span>
                         </div>
                         {payment.paidDate && (
                           <div className="flex items-center">
@@ -422,10 +425,10 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                         {loadingPayments.has(payment.id) ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Marking...
+                            Segnando...
                           </>
                         ) : (
-                          "Mark as Paid"
+                          "Segna come Pagato"
                         )}
                       </Button>
                     ) : (
@@ -438,7 +441,7 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                         {loadingPayments.has(payment.id) ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Marking...
+                            Segnando...
                           </>
                         ) : (
                           "Mark as Unpaid"

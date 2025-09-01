@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "../ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Edit, Trash2, Calendar, DollarSign } from "lucide-react"
+import { Card, CardContent } from "../ui/card"
+import { Edit, Trash2, Calendar, Euro } from "lucide-react"
 import { format } from "date-fns"
 import EditSubscriptionDialog from "./edit-subscription-dialog"
 
@@ -44,7 +44,7 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
 
 
   const deleteSubscription = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this subscription?")) {
+    if (!confirm("Sei sicuro di voler eliminare questo abbonamento?")) {
       return
     }
 
@@ -57,32 +57,35 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
         setSubscriptions(subscriptions.filter(sub => sub.id !== id))
         onUpdate()
       } else {
-        console.error("Failed to delete subscription")
+        console.error("Impossibile eliminare l'abbonamento")
       }
     } catch (error) {
-      console.error("Error deleting subscription:", error)
+      console.error("Errore nell'eliminazione dell'abbonamento:", error)
     }
   }
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount)
+    if (Number.isNaN(amount) || !Number.isFinite(amount)) {
+      amount = 0;
+    }
+    
+    // Simple deterministic formatting to avoid hydration issues
+    const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${formatted} €`;
   }
 
   const getFrequencyLabel = (frequency: string) => {
     switch (frequency) {
       case "MONTHLY":
-        return "Monthly"
+        return "Mensile"
       case "YEARLY":
-        return "Yearly"
+        return "Annuale"
       case "WEEKLY":
-        return "Weekly"
+        return "Settimanale"
       case "QUARTERLY":
-        return "Quarterly"
+        return "Trimestrale"
       case "ONE_TIME":
-        return "One-time"
+        return "Una tantum"
       default:
         return frequency
     }
@@ -121,9 +124,9 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
     return (
       <div className="text-center py-8">
         <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No subscriptions</h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">Nessun abbonamento</h3>
         <p className="mt-1 text-sm text-gray-500">
-          Get started by creating your first subscription.
+          Inizia creando il tuo primo abbonamento.
         </p>
       </div>
     )
@@ -162,26 +165,26 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
 
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
                   <div className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1" />
+                    <Euro className="h-4 w-4 mr-1" />
                     <span>
-                      {formatCurrency(subscription.amount, subscription.currency)} / {getFrequencyLabel(subscription.frequency)}
+                      {formatCurrency(subscription.amount)} / {getFrequencyLabel(subscription.frequency)}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    <span>Started {format(new Date(subscription.startDate), "MMM dd, yyyy")}</span>
+                    <span>Iniziato {format(new Date(subscription.startDate), "dd MMM yyyy")}</span>
                   </div>
                   {subscription.endDate && (
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
-                      <span>Ends {format(new Date(subscription.endDate), "MMM dd, yyyy")}</span>
+                      <span>Termina {format(new Date(subscription.endDate), "dd MMM yyyy")}</span>
                     </div>
                   )}
                 </div>
 
                 {subscription.payments && subscription.payments.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700">Recent Payments:</p>
+                    <p className="text-sm font-medium text-gray-700">Pagamenti Recenti:</p>
                     <div className="mt-2 space-y-1">
                       {subscription.payments.slice(0, 3).map((payment) => (
                         <div
@@ -189,7 +192,7 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
                           className="flex items-center justify-between text-xs text-gray-500"
                         >
                           <span>
-                            Due: {format(new Date(payment.dueDate), "MMM dd, yyyy")}
+                            Scadenza: {format(new Date(payment.dueDate), "dd MMM yyyy")}
                           </span>
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${

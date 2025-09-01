@@ -111,11 +111,11 @@ export default function EditSubscriptionDialog({
         onSuccess()
       } else {
         const error = await response.json()
-        console.error("Error updating subscription:", error)
+        console.error("Errore nell'aggiornamento dell'abbonamento:", error)
         alert("Failed to update subscription. Please try again.")
       }
     } catch (error) {
-      console.error("Error updating subscription:", error)
+      console.error("Errore nell'aggiornamento dell'abbonamento:", error)
       alert("An error occurred. Please try again.")
     } finally {
       setLoading(false)
@@ -132,15 +132,15 @@ export default function EditSubscriptionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Subscription</DialogTitle>
+          <DialogTitle>Modifica Abbonamento</DialogTitle>
           <DialogDescription>
-            Update your subscription details.
+            Aggiorna i dettagli del tuo abbonamento.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
                 placeholder="Netflix, Spotify, etc."
@@ -151,23 +151,23 @@ export default function EditSubscriptionDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="type">Type</Label>
+              <Label htmlFor="type">Tipo</Label>
               <Select value={formData.type} onValueChange={(value) => updateFormData("type", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Seleziona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
-                  <SelectItem value="TAX">Tax</SelectItem>
-                  <SelectItem value="INSTALLMENT">Installment</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="SUBSCRIPTION">Abbonamento</SelectItem>
+                  <SelectItem value="TAX">Tassa</SelectItem>
+                  <SelectItem value="INSTALLMENT">Rata</SelectItem>
+                  <SelectItem value="OTHER">Altro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="amount">Importo</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -180,7 +180,7 @@ export default function EditSubscriptionDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">Valuta</Label>
                 <Select value={formData.currency} onValueChange={(value) => updateFormData("currency", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Currency" />
@@ -196,23 +196,23 @@ export default function EditSubscriptionDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="frequency">Frequency</Label>
+              <Label htmlFor="frequency">Frequenza</Label>
               <Select value={formData.frequency} onValueChange={(value) => updateFormData("frequency", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                  <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                  <SelectItem value="YEARLY">Yearly</SelectItem>
-                  <SelectItem value="ONE_TIME">One-time</SelectItem>
+                  <SelectItem value="WEEKLY">Settimanale</SelectItem>
+                  <SelectItem value="MONTHLY">Mensile</SelectItem>
+                  <SelectItem value="QUARTERLY">Trimestrale</SelectItem>
+                  <SelectItem value="YEARLY">Annuale</SelectItem>
+                  <SelectItem value="ONE_TIME">Una tantum</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">Data Inizio</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -223,7 +223,7 @@ export default function EditSubscriptionDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="endDate">End Date (Optional)</Label>
+              <Label htmlFor="endDate">Data Fine (Opzionale)</Label>
               <Input
                 id="endDate"
                 type="date"
@@ -233,25 +233,25 @@ export default function EditSubscriptionDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Stato</Label>
               <Select value={formData.status} onValueChange={(value) => updateFormData("status", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  <SelectItem value="EXPIRED">Expired</SelectItem>
+                  <SelectItem value="ACTIVE">Attivo</SelectItem>
+                  <SelectItem value="CANCELLED">Cancellato</SelectItem>
+                  <SelectItem value="EXPIRED">Scaduto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              Annulla
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Updating..." : "Update Subscription"}
+              {loading ? "Aggiornamento..." : "Aggiorna Abbonamento"}
             </Button>
           </DialogFooter>
         </form>

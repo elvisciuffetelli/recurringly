@@ -1,6 +1,6 @@
 # Email Notification Setup
 
-This guide will help you set up email notifications for payment reminders in MySubscriptions.
+This guide will help you set up email notifications for payment reminders in Recurringly.
 
 ## Email Service Configuration
 
@@ -43,7 +43,7 @@ SMTP_PASSWORD=your-smtp-password
 - Professional HTML templates with responsive design
 - Color-coded by urgency level
 - Payment details including amount, due date, and subscription info
-- Branded with MySubscriptions styling
+- Branded with Recurringly styling
 
 ### Notification Options
 
