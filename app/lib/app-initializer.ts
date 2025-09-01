@@ -1,11 +1,9 @@
-import { initializeCronJobs } from './cron-scheduler'
-
 // This function runs when the application starts
 export function initializeApplication() {
   console.log('🚀 Initializing MySubscriptions application...')
   
-  // Start cron jobs for automatic email reminders
-  initializeCronJobs()
+  // Note: Cron jobs are now handled by Vercel Cron Jobs (vercel.json)
+  // No need to initialize node-cron in serverless environment
   
   console.log('✅ Application initialization completed!')
 }
