@@ -4,6 +4,7 @@ import "./globals.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import NotificationProvider from "./components/providers/notification-provider";
 import AuthProvider from "./components/providers/session-provider";
+import { SWRProvider } from "./lib/swr-provider";
 import "./lib/app-initializer"; // Initialize cron jobs
 
 const geistSans = Geist({
@@ -32,9 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <NotificationProvider>
-            <NuqsAdapter>{children}</NuqsAdapter>
-          </NotificationProvider>
+          <SWRProvider>
+            <NotificationProvider>
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </NotificationProvider>
+          </SWRProvider>
         </AuthProvider>
       </body>
     </html>

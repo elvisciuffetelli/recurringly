@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../ui/select"
 import { format } from "date-fns"
+import { mutate } from "swr"
 
 interface Subscription {
   id: string
@@ -107,6 +108,8 @@ export default function EditSubscriptionDialog({
       })
 
       if (response.ok) {
+        // Aggiorna i dati in cache
+        mutate('/api/subscriptions')
         onOpenChange(false)
         onSuccess()
       } else {

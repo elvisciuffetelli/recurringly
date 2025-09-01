@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "../ui/select"
 import { format } from "date-fns"
+import { mutate } from "swr"
 
 interface CreateSubscriptionDialogProps {
   open: boolean
@@ -76,6 +77,8 @@ export default function CreateSubscriptionDialog({
       })
 
       if (response.ok) {
+        // Aggiorna i dati in cache
+        mutate('/api/subscriptions')
         // Reset form
         setFormData({
           name: "",

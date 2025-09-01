@@ -1,7 +1,6 @@
 "use client";
 
 import { Calendar, CreditCard, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardStats from "./dashboard/dashboard-stats";
 import PaymentsView from "./payments/payments-view";
@@ -19,12 +18,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface DashboardProps {
-  dashboardData: {
-    subscriptions: any[];
-    monthlyTotal: number;
-    yearlyTotal: number;
-    totalByType: Record<string, number>;
-  };
   payments: any[];
   initialFilters: {
     status?: "all" | "pending" | "paid" | "overdue";
@@ -34,12 +27,10 @@ interface DashboardProps {
 }
 
 export default function Dashboard({
-  dashboardData,
   payments,
   initialFilters,
 }: DashboardProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const router = useRouter();
   const { checkPaymentNotifications } = useNotifications();
 
   useEffect(() => {
@@ -47,17 +38,10 @@ export default function Dashboard({
     if (payments.length > 0) {
       checkPaymentNotifications(payments);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    JSON.stringify(
-      payments.map((p) => ({ id: p.id, status: p.status, dueDate: p.dueDate })),
-    ),
-    checkPaymentNotifications,
-  ]);
+  }, [payments, checkPaymentNotifications]);
 
   const handleSubscriptionCreated = () => {
-    // Refresh the page to get updated data
-    router.refresh();
+    // SWR si occuperà automaticamente dell'aggiornamento
   };
 
   return (
@@ -75,7 +59,7 @@ export default function Dashboard({
         </Button>
       </div>
 
-      <DashboardStats data={dashboardData} />
+      <DashboardStats />
 
       <Tabs defaultValue="subscriptions" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
@@ -101,10 +85,7 @@ export default function Dashboard({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SubscriptionList
-                subscriptions={dashboardData.subscriptions}
-                onUpdate={handleSubscriptionCreated}
-              />
+              <SubscriptionList />
             </CardContent>
           </Card>
         </TabsContent>

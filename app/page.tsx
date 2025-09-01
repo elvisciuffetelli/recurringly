@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "./lib/auth"
-import { getDashboardData, getPayments } from "./lib/data-fetchers"
+import { getPayments } from "./lib/data-fetchers"
 import { Suspense } from "react"
 import AuthenticatedLayout from "./components/authenticated-layout"
 import Dashboard from "./components/dashboard"
@@ -43,17 +43,13 @@ export default async function Home({ searchParams }: HomeProps) {
     page: params.page ? parseInt(params.page, 10) : 1,
   }
 
-  // Fetch data in parallel with filters
-  const [dashboardData, payments] = await Promise.all([
-    getDashboardData(),
-    getPayments(filters)
-  ])
+  // Fetch only payments data since dashboard data is now handled by SWR
+  const payments = await getPayments(filters)
 
   return (
     <AuthenticatedLayout session={session}>
       <Suspense fallback={<div>Caricamento dashboard...</div>}>
         <Dashboard 
-          dashboardData={dashboardData}
           payments={payments}
           initialFilters={filters}
         />

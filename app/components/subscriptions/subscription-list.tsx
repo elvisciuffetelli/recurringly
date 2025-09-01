@@ -1,68 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
 import { Edit, Trash2, Calendar, Euro } from "lucide-react"
 import { format } from "date-fns"
 import EditSubscriptionDialog from "./edit-subscription-dialog"
+import { useSubscriptions } from "../../hooks/use-subscriptions"
 
-interface Subscription {
-  id: string
-  name: string
-  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER"
-  amount: number
-  currency: string
-  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME"
-  startDate: string
-  endDate?: string | null
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED"
-  createdAt: string
-  updatedAt: string
-  payments?: Array<{
-    id: string
-    amount: number
-    dueDate: string
-    paidDate?: string | null
-    status: "PENDING" | "PAID" | "OVERDUE"
-  }>
-}
-
-interface SubscriptionListProps {
-  subscriptions: Subscription[]
-  onUpdate: () => void
-}
-
-export default function SubscriptionList({ subscriptions: initialSubscriptions, onUpdate }: SubscriptionListProps) {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>(initialSubscriptions)
+export default function SubscriptionList() {
+  const { subscriptions, deleteSubscription } = useSubscriptions()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null)
-
-  useEffect(() => {
-    setSubscriptions(initialSubscriptions)
-  }, [initialSubscriptions])
-
-
-  const deleteSubscription = async (id: string) => {
-    if (!confirm("Sei sicuro di voler eliminare questo abbonamento?")) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/subscriptions/${id}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        setSubscriptions(subscriptions.filter(sub => sub.id !== id))
-        onUpdate()
-      } else {
-        console.error("Impossibile eliminare l'abbonamento")
-      }
-    } catch (error) {
-      console.error("Errore nell'eliminazione dell'abbonamento:", error)
-    }
-  }
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null)
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
@@ -242,7 +191,6 @@ export default function SubscriptionList({ subscriptions: initialSubscriptions, 
         onSuccess={() => {
           setEditDialogOpen(false)
           setSelectedSubscription(null)
-          onUpdate()
         }}
         subscription={selectedSubscription}
       />

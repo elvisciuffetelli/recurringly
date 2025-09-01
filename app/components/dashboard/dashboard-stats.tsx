@@ -1,27 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useDashboard } from "../../hooks/use-dashboard";
 
-interface Subscription {
-  id: string;
-  name: string;
-  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER";
-  amount: number;
-  currency: string;
-  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME";
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
-}
-
-interface DashboardData {
-  subscriptions: Subscription[];
-  monthlyTotal: number;
-  yearlyTotal: number;
-  totalByType: Record<string, number>;
-}
-
-interface DashboardStatsProps {
-  data: DashboardData;
-}
-
-export default function DashboardStats({ data }: DashboardStatsProps) {
+export default function DashboardStats() {
+  const { dashboardData: data, isLoading } = useDashboard();
+  
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded w-16 animate-pulse mb-2" />
+              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   const formatCurrency = (amount: number) => {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
       amount = 0;

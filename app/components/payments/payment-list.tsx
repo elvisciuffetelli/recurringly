@@ -1,65 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
 import { CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
-
-interface Payment {
-  id: string
-  amount: number
-  dueDate: string
-  paidDate?: string | null
-  status: "PENDING" | "PAID" | "OVERDUE"
-  subscription: {
-    id: string
-    name: string
-    currency: string
-  }
-}
+import { usePayments } from "../../hooks/use-payments"
 
 export default function PaymentList() {
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
+  const { payments, isLoading, markAsPaid } = usePayments()
 
-  const fetchPayments = useCallback(async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/payments")
-      if (response.ok) {
-        const data = await response.json()
-        setPayments(data)
-      }
-    } catch (error) {
-      console.error("Errore nel recuperare i pagamenti:", error)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchPayments()
-  }, [fetchPayments])
-
-  const markAsPaid = async (paymentId: string) => {
-    try {
-      const response = await fetch(`/api/payments/${paymentId}/mark-paid`, {
-        method: "POST",
-      })
-
-      if (response.ok) {
-        // Refresh payments list
-        fetchPayments()
-      } else {
-        console.error("Impossibile segnare il pagamento come pagato")
-      }
-    } catch (error) {
-      console.error("Errore nel segnare il pagamento come pagato:", error)
-    }
-  }
-
-  const formatCurrency = (amount: number, currency: string = "EUR") => {
+  const formatCurrency = (amount: number) => {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
       amount = 0;
     }
@@ -91,7 +41,7 @@ export default function PaymentList() {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (

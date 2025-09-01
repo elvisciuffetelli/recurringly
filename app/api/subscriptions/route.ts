@@ -32,7 +32,17 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json(subscriptions)
+    // Convert Decimal amounts to numbers for proper JSON serialization
+    const serializedSubscriptions = subscriptions.map(sub => ({
+      ...sub,
+      amount: Number(sub.amount),
+      payments: sub.payments.map(payment => ({
+        ...payment,
+        amount: Number(payment.amount)
+      }))
+    }))
+
+    return NextResponse.json(serializedSubscriptions)
   } catch (error) {
     console.error("Error fetching subscriptions:", error)
     return NextResponse.json(
