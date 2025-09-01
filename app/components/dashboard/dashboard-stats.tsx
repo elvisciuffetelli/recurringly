@@ -1,13 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useDashboard } from "../../hooks/use-dashboard";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 export default function DashboardStats() {
   const { dashboardData: data, isLoading } = useDashboard();
-  
+
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
@@ -25,7 +26,7 @@ export default function DashboardStats() {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
       amount = 0;
     }
-    
+
     // Simple deterministic formatting to avoid hydration issues
     const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return `${formatted} €`;
