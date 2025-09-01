@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 
 class CronScheduler {
-  private jobs: Map<string, cron.ScheduledTask> = new Map()
+  private jobs: Map<string, any> = new Map()
 
   // Schedule daily email reminders at 9:00 AM every day
   startDailyEmailReminders() {
@@ -28,7 +28,6 @@ class CronScheduler {
         console.error('💥 Error calling daily email reminder endpoint:', error)
       }
     }, {
-      scheduled: false, // Don't start immediately
       timezone: 'Europe/Rome' // Change to your timezone
     })
 
@@ -65,7 +64,6 @@ class CronScheduler {
         console.error('💥 Error in overdue payment alerts:', error)
       }
     }, {
-      scheduled: false,
       timezone: 'Europe/Rome'
     })
 
