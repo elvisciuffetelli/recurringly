@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 import { CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, Euro, Info, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { format, isAfter, startOfMonth, endOfMonth, getYear } from "date-fns"
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs"
+import { useAvailableYears } from "../../hooks/use-available-years"
 
 interface Payment {
   id: string
@@ -197,11 +198,8 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
   const startIndex = (currentPage - 1) * paymentsPerPage
   const paginatedPayments = payments.slice(startIndex, startIndex + paymentsPerPage)
 
-  // Get unique years from all payments for filter buttons
-  // Note: We could also pass this from server, but keeping it simple for now
-  const availableYears = Array.from(new Set(
-    payments.map(payment => getYear(new Date(payment.dueDate)))
-  )).sort()
+  // Get unique years from all payments (not filtered by current year selection)
+  const availableYears = useAvailableYears()
 
   // Reset to first page when filters change
   useEffect(() => {

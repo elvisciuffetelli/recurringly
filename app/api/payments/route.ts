@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url)
     const subscriptionId = url.searchParams.get("subscriptionId")
+    const all = url.searchParams.get("all") // Per ottenere tutti i pagamenti senza filtri
 
     const whereClause: any = {
       subscription: {
@@ -31,6 +32,12 @@ export async function GET(request: NextRequest) {
 
     if (subscriptionId) {
       whereClause.subscriptionId = subscriptionId
+    }
+
+    // Se il parametro "all" è presente, non applichiamo altri filtri
+    // Questo è utile per calcolare gli anni disponibili nei filtri
+    if (all === "true") {
+      // Non applicare filtri aggiuntivi, restituire tutti i pagamenti
     }
 
     const payments = await prisma.payment.findMany({

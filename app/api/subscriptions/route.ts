@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       include: {
         payments: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { amount: "desc" },
     })
 
     // Convert Decimal amounts to numbers for proper JSON serialization

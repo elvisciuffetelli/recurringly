@@ -20,7 +20,8 @@ export async function GET() {
         subscriptions: {
           where: {
             status: { not: "EXPIRED" }
-          }
+          },
+          orderBy: { amount: "desc" }
         }
       }
     })
