@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
-import { Edit, Trash2, Calendar, Euro } from "lucide-react";
+import { Edit, Trash2, Calendar, Euro, Eye } from "lucide-react";
 import { format } from "date-fns";
 import EditSubscriptionDialog from "./edit-subscription-dialog";
 import { useSubscriptions } from "../../hooks/use-subscriptions";
 
 export default function SubscriptionList() {
   const { subscriptions, deleteSubscription } = useSubscriptions();
+  const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
 
@@ -115,6 +117,13 @@ export default function SubscriptionList() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => router.push(`/subscriptions/${subscription.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         setSelectedSubscription(subscription);
                         setEditDialogOpen(true);
@@ -192,6 +201,13 @@ export default function SubscriptionList() {
               </div>
 
               <div className="hidden sm:flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/subscriptions/${subscription.id}`)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
