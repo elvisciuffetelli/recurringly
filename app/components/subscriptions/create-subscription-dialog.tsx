@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "../ui/button"
+import { useState } from "react";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,34 +9,34 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select"
-import { format } from "date-fns"
-import { mutate } from "swr"
+} from "../ui/select";
+import { format } from "date-fns";
+import { mutate } from "swr";
 
 interface CreateSubscriptionDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
 interface FormData {
-  name: string
-  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER"
-  amount: string
-  currency: string
-  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME"
-  startDate: string
-  endDate: string
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED"
+  name: string;
+  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER";
+  amount: string;
+  currency: string;
+  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME";
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
 }
 
 export default function CreateSubscriptionDialog({
@@ -44,7 +44,7 @@ export default function CreateSubscriptionDialog({
   onOpenChange,
   onSuccess,
 }: CreateSubscriptionDialogProps) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     type: "SUBSCRIPTION",
@@ -54,19 +54,21 @@ export default function CreateSubscriptionDialog({
     startDate: format(new Date(), "yyyy-MM-dd"),
     endDate: "",
     status: "ACTIVE",
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
       const payload = {
         ...formData,
         amount: parseFloat(formData.amount),
         startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : undefined,
-      }
+        endDate: formData.endDate
+          ? new Date(formData.endDate).toISOString()
+          : undefined,
+      };
 
       const response = await fetch("/api/subscriptions", {
         method: "POST",
@@ -74,11 +76,11 @@ export default function CreateSubscriptionDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      })
+      });
 
       if (response.ok) {
         // Aggiorna i dati in cache
-        mutate('/api/subscriptions')
+        mutate("/api/subscriptions");
         // Reset form
         setFormData({
           name: "",
@@ -89,25 +91,25 @@ export default function CreateSubscriptionDialog({
           startDate: format(new Date(), "yyyy-MM-dd"),
           endDate: "",
           status: "ACTIVE",
-        })
-        onOpenChange(false)
-        onSuccess()
+        });
+        onOpenChange(false);
+        onSuccess();
       } else {
-        const error = await response.json()
-        console.error("Errore nella creazione dell'abbonamento:", error)
-        alert("Impossibile creare l'abbonamento. Riprova.")
+        const error = await response.json();
+        console.error("Errore nella creazione dell'abbonamento:", error);
+        alert("Impossibile creare l'abbonamento. Riprova.");
       }
     } catch (error) {
-      console.error("Errore nella creazione dell'abbonamento:", error)
-      alert("Si è verificato un errore. Riprova.")
+      console.error("Errore nella creazione dell'abbonamento:", error);
+      alert("Si è verificato un errore. Riprova.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const updateFormData = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,7 +135,10 @@ export default function CreateSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="type">Tipo</Label>
-              <Select value={formData.type} onValueChange={(value) => updateFormData("type", value)}>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => updateFormData("type", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleziona tipo" />
                 </SelectTrigger>
@@ -162,7 +167,10 @@ export default function CreateSubscriptionDialog({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="currency">Valuta</Label>
-                <Select value={formData.currency} onValueChange={(value) => updateFormData("currency", value)}>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => updateFormData("currency", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Valuta" />
                   </SelectTrigger>
@@ -178,7 +186,10 @@ export default function CreateSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="frequency">Frequenza</Label>
-              <Select value={formData.frequency} onValueChange={(value) => updateFormData("frequency", value)}>
+              <Select
+                value={formData.frequency}
+                onValueChange={(value) => updateFormData("frequency", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleziona frequenza" />
                 </SelectTrigger>
@@ -215,7 +226,10 @@ export default function CreateSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="status">Stato</Label>
-              <Select value={formData.status} onValueChange={(value) => updateFormData("status", value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => updateFormData("status", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleziona stato" />
                 </SelectTrigger>
@@ -228,7 +242,11 @@ export default function CreateSubscriptionDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Annulla
             </Button>
             <Button type="submit" disabled={loading}>
@@ -238,5 +256,5 @@ export default function CreateSubscriptionDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

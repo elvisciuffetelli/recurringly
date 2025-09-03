@@ -45,34 +45,45 @@ export default function Dashboard({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Dashboard
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Panoramica delle tue sottoscrizioni e spese
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="w-full sm:w-auto"
+        >
           <Plus className="mr-2 h-4 w-4" />
-          Aggiungi Abbonamento
+          <span className="sm:hidden">Nuovo</span>
+          <span className="hidden sm:inline">Aggiungi Abbonamento</span>
         </Button>
       </div>
 
       <DashboardStats />
 
-      <Tabs defaultValue="subscriptions" className="space-y-6">
+      <Tabs defaultValue="subscriptions" className="space-y-4 sm:space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger
             value="subscriptions"
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
           >
-            <CreditCard className="h-4 w-4" />
-            Sottoscrizioni
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Sottoscrizioni</span>
+            <span className="xs:hidden">Abb.</span>
           </TabsTrigger>
-          <TabsTrigger value="payments" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Pagamenti
+          <TabsTrigger
+            value="payments"
+            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Pagamenti</span>
+            <span className="xs:hidden">Pag.</span>
           </TabsTrigger>
         </TabsList>
 

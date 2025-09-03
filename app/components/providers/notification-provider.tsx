@@ -1,89 +1,109 @@
-"use client"
+"use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react"
-import { format, isToday, isTomorrow, isAfter, isBefore, addDays } from "date-fns"
+import React, { createContext, useContext, useState, useCallback } from "react";
+import {
+  format,
+  isToday,
+  isTomorrow,
+  isAfter,
+  isBefore,
+  addDays,
+} from "date-fns";
 
 interface Payment {
-  id: string
-  amount: number
-  dueDate: string
-  status: "PENDING" | "PAID" | "OVERDUE"
+  id: string;
+  amount: number;
+  dueDate: string;
+  status: "PENDING" | "PAID" | "OVERDUE";
   subscription: {
-    name: string
-    currency: string
-  }
+    name: string;
+    currency: string;
+  };
 }
 
 interface Notification {
-  id: string
-  type: "overdue" | "due_today" | "due_tomorrow" | "due_soon"
-  title: string
-  message: string
-  payment: Payment
-  createdAt: Date
+  id: string;
+  type: "overdue" | "due_today" | "due_tomorrow" | "due_soon";
+  title: string;
+  message: string;
+  payment: Payment;
+  createdAt: Date;
 }
 
 interface NotificationContextType {
-  notifications: Notification[]
-  addNotification: (notification: Omit<Notification, "id" | "createdAt">) => void
-  removeNotification: (id: string) => void
-  clearAllNotifications: () => void
-  checkPaymentNotifications: (payments: Payment[]) => void
-  hasUnreadNotifications: boolean
+  notifications: Notification[];
+  addNotification: (
+    notification: Omit<Notification, "id" | "createdAt">,
+  ) => void;
+  removeNotification: (id: string) => void;
+  clearAllNotifications: () => void;
+  checkPaymentNotifications: (payments: Payment[]) => void;
+  hasUnreadNotifications: boolean;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined,
+);
 
 export const useNotifications = () => {
-  const context = useContext(NotificationContext)
+  const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error("useNotifications must be used within a NotificationProvider")
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider",
+    );
   }
-  return context
-}
+  return context;
+};
 
 interface NotificationProviderProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
-export default function NotificationProvider({ children }: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([])
+export default function NotificationProvider({
+  children,
+}: NotificationProviderProps) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const addNotification = (notification: Omit<Notification, "id" | "createdAt">) => {
+  const addNotification = (
+    notification: Omit<Notification, "id" | "createdAt">,
+  ) => {
     const newNotification: Notification = {
       ...notification,
       id: crypto.randomUUID(),
       createdAt: new Date(),
-    }
-    setNotifications(prev => [newNotification, ...prev])
-  }
+    };
+    setNotifications((prev) => [newNotification, ...prev]);
+  };
 
   const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
-  }
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   const clearAllNotifications = () => {
-    setNotifications([])
-  }
+    setNotifications([]);
+  };
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const checkPaymentNotifications = useCallback((payments: Payment[]) => {
-    const now = new Date()
-    const nextWeek = addDays(now, 7)
+    const now = new Date();
+    const nextWeek = addDays(now, 7);
 
-    const newNotifications: Notification[] = []
+    const newNotifications: Notification[] = [];
 
-    payments.forEach(payment => {
-      if (payment.status === "PAID") return
+    payments.forEach((payment) => {
+      if (payment.status === "PAID") return;
 
-      const dueDate = new Date(payment.dueDate)
-      const amount = formatCurrency(payment.amount, payment.subscription.currency)
+      const dueDate = new Date(payment.dueDate);
+      const amount = formatCurrency(
+        payment.amount,
+        payment.subscription.currency,
+      );
 
       if (payment.status === "OVERDUE") {
         newNotifications.push({
@@ -93,7 +113,7 @@ export default function NotificationProvider({ children }: NotificationProviderP
           message: `${payment.subscription.name} payment of ${amount} is overdue (due ${format(dueDate, "MMM dd")})`,
           payment,
           createdAt: new Date(),
-        })
+        });
       } else if (isToday(dueDate)) {
         newNotifications.push({
           id: crypto.randomUUID(),
@@ -102,7 +122,7 @@ export default function NotificationProvider({ children }: NotificationProviderP
           message: `${payment.subscription.name} payment of ${amount} is due today`,
           payment,
           createdAt: new Date(),
-        })
+        });
       } else if (isTomorrow(dueDate)) {
         newNotifications.push({
           id: crypto.randomUUID(),
@@ -111,7 +131,7 @@ export default function NotificationProvider({ children }: NotificationProviderP
           message: `${payment.subscription.name} payment of ${amount} is due tomorrow`,
           payment,
           createdAt: new Date(),
-        })
+        });
       } else if (isAfter(dueDate, now) && isBefore(dueDate, nextWeek)) {
         newNotifications.push({
           id: crypto.randomUUID(),
@@ -120,18 +140,23 @@ export default function NotificationProvider({ children }: NotificationProviderP
           message: `${payment.subscription.name} payment of ${amount} is due ${format(dueDate, "MMM dd")}`,
           payment,
           createdAt: new Date(),
-        })
+        });
       }
-    })
+    });
 
     // Replace all payment notifications with new ones
-    setNotifications(prev => [
+    setNotifications((prev) => [
       ...newNotifications,
-      ...prev.filter(n => !["overdue", "due_today", "due_tomorrow", "due_soon"].includes(n.type))
-    ])
-  }, [])
+      ...prev.filter(
+        (n) =>
+          !["overdue", "due_today", "due_tomorrow", "due_soon"].includes(
+            n.type,
+          ),
+      ),
+    ]);
+  }, []);
 
-  const hasUnreadNotifications = notifications.length > 0
+  const hasUnreadNotifications = notifications.length > 0;
 
   return (
     <NotificationContext.Provider
@@ -146,5 +171,5 @@ export default function NotificationProvider({ children }: NotificationProviderP
     >
       {children}
     </NotificationContext.Provider>
-  )
+  );
 }

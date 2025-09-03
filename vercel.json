@@ -1,12 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/daily-email-reminders",
+      "path": "/api/cron/email-notifications",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/notifications/email?type=overdue",
-      "schedule": "0 10 * * *"
     }
   ]
 }

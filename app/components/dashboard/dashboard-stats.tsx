@@ -6,16 +6,16 @@ export default function DashboardStats() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+              <div className="h-3 sm:h-4 bg-gray-200 rounded w-16 sm:w-24 animate-pulse" />
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-16 animate-pulse mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse" />
+              <div className="h-6 sm:h-8 bg-gray-200 rounded w-12 sm:w-16 animate-pulse mb-2" />
+              <div className="h-2 sm:h-3 bg-gray-200 rounded w-16 sm:w-20 animate-pulse" />
             </CardContent>
           </Card>
         ))}
@@ -37,15 +37,17 @@ export default function DashboardStats() {
   );
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
+          <CardTitle className="text-xs sm:text-sm font-medium">
             Abbonamenti Attivi
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{activeSubscriptions.length}</div>
+          <div className="text-xl sm:text-2xl font-bold">
+            {activeSubscriptions.length}
+          </div>
           <p className="text-xs text-muted-foreground">
             {data.subscriptions.length} totali
           </p>
@@ -54,10 +56,12 @@ export default function DashboardStats() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Totale Mensile</CardTitle>
+          <CardTitle className="text-xs sm:text-sm font-medium">
+            Totale Mensile
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-xl sm:text-2xl font-bold">
             {formatCurrency(data.monthlyTotal)}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -68,10 +72,12 @@ export default function DashboardStats() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Totale Annuale</CardTitle>
+          <CardTitle className="text-xs sm:text-sm font-medium">
+            Totale Annuale
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-xl sm:text-2xl font-bold">
             {formatCurrency(data.yearlyTotal)}
           </div>
           <p className="text-xs text-muted-foreground">Spese totali all'anno</p>
@@ -80,7 +86,7 @@ export default function DashboardStats() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
+          <CardTitle className="text-xs sm:text-sm font-medium">
             Categoria Più Costosa
           </CardTitle>
         </CardHeader>
@@ -90,7 +96,7 @@ export default function DashboardStats() {
             (val) => !Number.isNaN(val) && val > 0,
           ) ? (
             <>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {
                   Object.entries(data.totalByType)
                     .filter(([_, value]) => !Number.isNaN(value) && value > 0)
@@ -110,7 +116,7 @@ export default function DashboardStats() {
             </>
           ) : (
             <>
-              <div className="text-2xl font-bold">-</div>
+              <div className="text-xl sm:text-2xl font-bold">-</div>
               <p className="text-xs text-muted-foreground">
                 Nessun dato disponibile
               </p>

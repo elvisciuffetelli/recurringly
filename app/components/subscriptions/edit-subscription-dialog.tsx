@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "../ui/button"
+import { useState, useEffect } from "react";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,47 +9,47 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select"
-import { format } from "date-fns"
-import { mutate } from "swr"
+} from "../ui/select";
+import { format } from "date-fns";
+import { mutate } from "swr";
 
 interface Subscription {
-  id: string
-  name: string
-  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER"
-  amount: number
-  currency: string
-  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME"
-  startDate: string
-  endDate?: string | null
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED"
+  id: string;
+  name: string;
+  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER";
+  amount: number;
+  currency: string;
+  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME";
+  startDate: string;
+  endDate?: string | null;
+  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
 }
 
 interface EditSubscriptionDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-  subscription: Subscription | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  subscription: Subscription | null;
 }
 
 interface FormData {
-  name: string
-  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER"
-  amount: string
-  currency: string
-  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME"
-  startDate: string
-  endDate: string
-  status: "ACTIVE" | "CANCELLED" | "EXPIRED"
+  name: string;
+  type: "SUBSCRIPTION" | "TAX" | "INSTALLMENT" | "OTHER";
+  amount: string;
+  currency: string;
+  frequency: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "ONE_TIME";
+  startDate: string;
+  endDate: string;
+  status: "ACTIVE" | "CANCELLED" | "EXPIRED";
 }
 
 export default function EditSubscriptionDialog({
@@ -58,7 +58,7 @@ export default function EditSubscriptionDialog({
   onSuccess,
   subscription,
 }: EditSubscriptionDialogProps) {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     type: "SUBSCRIPTION",
@@ -68,7 +68,7 @@ export default function EditSubscriptionDialog({
     startDate: format(new Date(), "yyyy-MM-dd"),
     endDate: "",
     status: "ACTIVE",
-  })
+  });
 
   useEffect(() => {
     if (subscription && open) {
@@ -79,25 +79,29 @@ export default function EditSubscriptionDialog({
         currency: subscription.currency,
         frequency: subscription.frequency,
         startDate: format(new Date(subscription.startDate), "yyyy-MM-dd"),
-        endDate: subscription.endDate ? format(new Date(subscription.endDate), "yyyy-MM-dd") : "",
+        endDate: subscription.endDate
+          ? format(new Date(subscription.endDate), "yyyy-MM-dd")
+          : "",
         status: subscription.status,
-      })
+      });
     }
-  }, [subscription, open])
+  }, [subscription, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!subscription) return
+    e.preventDefault();
+    if (!subscription) return;
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const payload = {
         ...formData,
         amount: parseFloat(formData.amount),
         startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
-      }
+        endDate: formData.endDate
+          ? new Date(formData.endDate).toISOString()
+          : null,
+      };
 
       const response = await fetch(`/api/subscriptions/${subscription.id}`, {
         method: "PUT",
@@ -105,31 +109,31 @@ export default function EditSubscriptionDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      })
+      });
 
       if (response.ok) {
         // Aggiorna i dati in cache
-        mutate('/api/subscriptions')
-        onOpenChange(false)
-        onSuccess()
+        mutate("/api/subscriptions");
+        onOpenChange(false);
+        onSuccess();
       } else {
-        const error = await response.json()
-        console.error("Errore nell'aggiornamento dell'abbonamento:", error)
-        alert("Failed to update subscription. Please try again.")
+        const error = await response.json();
+        console.error("Errore nell'aggiornamento dell'abbonamento:", error);
+        alert("Failed to update subscription. Please try again.");
       }
     } catch (error) {
-      console.error("Errore nell'aggiornamento dell'abbonamento:", error)
-      alert("An error occurred. Please try again.")
+      console.error("Errore nell'aggiornamento dell'abbonamento:", error);
+      alert("An error occurred. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const updateFormData = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-  if (!subscription) return null
+  if (!subscription) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,7 +159,10 @@ export default function EditSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="type">Tipo</Label>
-              <Select value={formData.type} onValueChange={(value) => updateFormData("type", value)}>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => updateFormData("type", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleziona tipo" />
                 </SelectTrigger>
@@ -184,7 +191,10 @@ export default function EditSubscriptionDialog({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="currency">Valuta</Label>
-                <Select value={formData.currency} onValueChange={(value) => updateFormData("currency", value)}>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => updateFormData("currency", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Currency" />
                   </SelectTrigger>
@@ -200,7 +210,10 @@ export default function EditSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="frequency">Frequenza</Label>
-              <Select value={formData.frequency} onValueChange={(value) => updateFormData("frequency", value)}>
+              <Select
+                value={formData.frequency}
+                onValueChange={(value) => updateFormData("frequency", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
@@ -237,7 +250,10 @@ export default function EditSubscriptionDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="status">Stato</Label>
-              <Select value={formData.status} onValueChange={(value) => updateFormData("status", value)}>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => updateFormData("status", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -250,7 +266,11 @@ export default function EditSubscriptionDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Annulla
             </Button>
             <Button type="submit" disabled={loading}>
@@ -260,5 +280,5 @@ export default function EditSubscriptionDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

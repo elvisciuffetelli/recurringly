@@ -1,11 +1,11 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-import { type NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { PrismaClient } from "@prisma/client";
+import { type NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,33 +14,36 @@ export const authOptions: NextAuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          return null;
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+          where: { email: credentials.email },
+        });
 
         if (!user || !user.password) {
-          return null
+          return null;
         }
 
-        const passwordsMatch = await bcrypt.compare(credentials.password, user.password)
+        const passwordsMatch = await bcrypt.compare(
+          credentials.password,
+          user.password,
+        );
 
         if (!passwordsMatch) {
-          return null
+          return null;
         }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-        }
-      }
+        };
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -51,18 +54,18 @@ export const authOptions: NextAuthOptions = {
     session: ({ session, token, user }) => {
       if (session?.user) {
         if (token?.sub) {
-          session.user.id = token.sub
+          session.user.id = token.sub;
         } else if (user?.id) {
-          session.user.id = user.id
+          session.user.id = user.id;
         }
       }
-      return session
+      return session;
     },
     jwt: ({ token, user }) => {
       if (user) {
-        token.sub = user.id
+        token.sub = user.id;
       }
-      return token
+      return token;
     },
   },
   pages: {
@@ -71,4 +74,4 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
-}
+};

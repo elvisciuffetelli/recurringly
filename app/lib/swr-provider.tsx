@@ -1,21 +1,22 @@
-"use client"
+"use client";
 
-import { SWRConfig } from 'swr'
+import { SWRConfig } from "swr";
 
-const fetcher = (url: string) => fetch(url).then(res => {
-  if (!res.ok) {
-    throw new Error('Failed to fetch')
-  }
-  return res.json()
-})
+const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch");
+    }
+    return res.json();
+  });
 
 interface SWRProviderProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function SWRProvider({ children }: SWRProviderProps) {
   return (
-    <SWRConfig 
+    <SWRConfig
       value={{
         fetcher,
         revalidateOnFocus: false,
@@ -25,5 +26,5 @@ export function SWRProvider({ children }: SWRProviderProps) {
     >
       {children}
     </SWRConfig>
-  )
+  );
 }

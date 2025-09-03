@@ -43,11 +43,11 @@ export default function PaymentList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {[...Array(3)].map((_, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <Card key={i}>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
                 <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
@@ -61,12 +61,12 @@ export default function PaymentList() {
 
   if (payments.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Clock className="mx-auto h-12 w-12 text-gray-400" />
+      <div className="text-center py-6 sm:py-8">
+        <Clock className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">
           Nessun pagamento trovato
         </h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-xs sm:text-sm text-gray-500 px-4">
           I pagamenti appariranno qui una volta creati gli abbonamenti.
         </p>
       </div>
@@ -74,15 +74,74 @@ export default function PaymentList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {payments.map((payment) => (
         <Card key={payment.id}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                {getStatusIcon(payment.status)}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">
+          <CardContent className="p-4 sm:p-6">
+            {/* Mobile Layout */}
+            <div className="sm:hidden">
+              {/* Single row layout */}
+              <div className="space-y-2">
+                {/* Top row: Icon, name, amount */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      {getStatusIcon(payment.status)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        {payment.subscription.name}
+                      </h3>
+                    </div>
+                  </div>
+                  <div className="text-sm font-semibold text-gray-900 ml-2">
+                    {formatCurrency(payment.amount)}
+                  </div>
+                </div>
+                
+                {/* Bottom row: Date and status */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    Scade: {format(new Date(payment.dueDate), "dd/MM/yy")}
+                    {payment.paidDate && (
+                      <span className="ml-2">
+                        • Pagato {format(new Date(payment.paidDate), "dd/MM")}
+                      </span>
+                    )}
+                  </p>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                      payment.status,
+                    )}`}
+                  >
+                    {payment.status === "PAID" ? "OK" : 
+                     payment.status === "OVERDUE" ? "SCADUTO" : "ATTESA"}
+                  </span>
+                </div>
+                
+                {/* Action button - full width if pending */}
+                {payment.status === "PENDING" && (
+                  <div className="pt-2">
+                    <Button 
+                      size="sm" 
+                      onClick={() => markAsPaid(payment.id)}
+                      className="w-full h-8 text-xs"
+                    >
+                      Segna Pagato
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden sm:flex sm:items-center sm:justify-between">
+              <div className="flex items-start space-x-4 flex-1">
+                <div className="flex-shrink-0">
+                  {getStatusIcon(payment.status)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-medium text-gray-900 truncate">
                     {payment.subscription.name}
                   </h3>
                   <p className="text-sm text-gray-500">
@@ -90,8 +149,7 @@ export default function PaymentList() {
                   </p>
                   {payment.paidDate && (
                     <p className="text-sm text-gray-500">
-                      Pagato:{" "}
-                      {format(new Date(payment.paidDate), "dd MMM yyyy")}
+                      Pagato: {format(new Date(payment.paidDate), "dd MMM yyyy")}
                     </p>
                   )}
                 </div>

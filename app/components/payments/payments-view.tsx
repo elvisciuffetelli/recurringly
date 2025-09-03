@@ -1,120 +1,146 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "../ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, Euro, Info, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
-import { format, isAfter, startOfMonth, endOfMonth, getYear } from "date-fns"
-import { useQueryState, parseAsString, parseAsInteger } from "nuqs"
-import { useAvailableYears } from "../../hooks/use-available-years"
+import { endOfMonth, format, getYear, isAfter, startOfMonth } from "date-fns";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Euro,
+  Info,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+import { useEffect, useState } from "react";
+import { useAvailableYears } from "../../hooks/use-available-years";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface Payment {
-  id: string
-  amount: number
-  dueDate: string
-  paidDate?: string | null
-  status: "PENDING" | "PAID" | "OVERDUE"
+  id: string;
+  amount: number;
+  dueDate: string;
+  paidDate?: string | null;
+  status: "PENDING" | "PAID" | "OVERDUE";
   subscription: {
-    id: string
-    name: string
-    currency: string
-    type: string
-  }
+    id: string;
+    name: string;
+    currency: string;
+    type: string;
+  };
 }
 
 interface PaymentsViewProps {
-  payments: Payment[]
-  onRefresh?: () => void
+  payments: Payment[];
+  onRefresh?: () => void;
   initialFilters: {
-    status?: "all" | "pending" | "paid" | "overdue"
-    year: number | "all" | "current"
-    page: number
-  }
+    status?: "all" | "pending" | "paid" | "overdue";
+    year: number | "all" | "current";
+    page: number;
+  };
 }
 
-export default function PaymentsView({ payments, onRefresh, initialFilters }: PaymentsViewProps) {
-  const [generatingPayments, setGeneratingPayments] = useState(false)
-  const [loadingPayments, setLoadingPayments] = useState<Set<string>>(new Set())
-  
+export default function PaymentsView({
+  payments,
+  onRefresh,
+  initialFilters,
+}: PaymentsViewProps) {
+  const [generatingPayments, setGeneratingPayments] = useState(false);
+  const [loadingPayments, setLoadingPayments] = useState<Set<string>>(
+    new Set(),
+  );
+
   // Use nuqs for URL state management with server-side re-rendering
   const [filter, setFilter] = useQueryState(
-    "status", 
-    parseAsString.withDefault(initialFilters.status || "all").withOptions({ shallow: false })
-  )
-  
+    "status",
+    parseAsString
+      .withDefault(initialFilters.status || "all")
+      .withOptions({ shallow: false }),
+  );
+
   const [yearFilter, setYearFilter] = useQueryState(
     "year",
-    parseAsString.withDefault(String(initialFilters.year)).withOptions({ shallow: false })
-  )
-  
+    parseAsString
+      .withDefault(String(initialFilters.year))
+      .withOptions({ shallow: false }),
+  );
+
   const [currentPage, setCurrentPage] = useQueryState(
     "page",
-    parseAsInteger.withDefault(initialFilters.page).withOptions({ shallow: false })
-  )
+    parseAsInteger
+      .withDefault(initialFilters.page)
+      .withOptions({ shallow: false }),
+  );
 
-  const paymentsPerPage = 12
-  const currentYear = new Date().getFullYear()
-  const nextYear = currentYear + 1
+  const paymentsPerPage = 12;
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
 
   // Parse year filter for computation
-  const parsedYearFilter = yearFilter === "all" || yearFilter === "current" ? yearFilter : parseInt(yearFilter)
+  const parsedYearFilter =
+    yearFilter === "all" || yearFilter === "current"
+      ? yearFilter
+      : parseInt(yearFilter);
 
   const refreshPayments = async () => {
     try {
-      setGeneratingPayments(true)
+      setGeneratingPayments(true);
       const response = await fetch("/api/payments/generate", {
         method: "POST",
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json();
         if (data.generatedCount > 0) {
-          alert(`Refreshed and added ${data.generatedCount} new payments`)
+          alert(`Refreshed and added ${data.generatedCount} new payments`);
         }
         // Call parent refresh function to reload page data
         if (onRefresh) {
-          onRefresh()
+          onRefresh();
         }
       } else {
-        console.error("Impossibile aggiornare i pagamenti")
+        console.error("Impossibile aggiornare i pagamenti");
       }
     } catch (error) {
-      console.error("Errore nell'aggiornamento dei pagamenti:", error)
+      console.error("Errore nell'aggiornamento dei pagamenti:", error);
     } finally {
-      setGeneratingPayments(false)
+      setGeneratingPayments(false);
     }
-  }
+  };
 
   const markAsPaid = async (paymentId: string) => {
     try {
-      setLoadingPayments(prev => new Set(prev).add(paymentId))
-      
+      setLoadingPayments((prev) => new Set(prev).add(paymentId));
+
       const response = await fetch(`/api/payments/${paymentId}/mark-paid`, {
         method: "POST",
-      })
+      });
 
       if (response.ok) {
         if (onRefresh) {
-          onRefresh()
+          onRefresh();
         }
       } else {
-        console.error("Impossibile segnare il pagamento come pagato")
+        console.error("Impossibile segnare il pagamento come pagato");
       }
     } catch (error) {
-      console.error("Errore nel segnare il pagamento come pagato:", error)
+      console.error("Errore nel segnare il pagamento come pagato:", error);
     } finally {
-      setLoadingPayments(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(paymentId)
-        return newSet
-      })
+      setLoadingPayments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(paymentId);
+        return newSet;
+      });
     }
-  }
+  };
 
   const markAsUnpaid = async (paymentId: string) => {
     try {
-      setLoadingPayments(prev => new Set(prev).add(paymentId))
-      
+      setLoadingPayments((prev) => new Set(prev).add(paymentId));
+
       const response = await fetch(`/api/payments/${paymentId}`, {
         method: "PUT",
         headers: {
@@ -124,145 +150,163 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
           status: "PENDING",
           paidDate: null,
         }),
-      })
+      });
 
       if (response.ok) {
         if (onRefresh) {
-          onRefresh()
+          onRefresh();
         }
       } else {
-        const errorData = await response.json()
-        console.error("Impossibile segnare il pagamento come non pagato:", errorData)
+        const errorData = await response.json();
+        console.error(
+          "Impossibile segnare il pagamento come non pagato:",
+          errorData,
+        );
       }
     } catch (error) {
-      console.error("Errore nel segnare il pagamento come non pagato:", error)
+      console.error("Errore nel segnare il pagamento come non pagato:", error);
     } finally {
-      setLoadingPayments(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(paymentId)
-        return newSet
-      })
+      setLoadingPayments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(paymentId);
+        return newSet;
+      });
     }
-  }
+  };
 
   const formatCurrency = (amount: number, currency: string = "EUR") => {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
       amount = 0;
     }
-    
+
     // Simple deterministic formatting to avoid hydration issues
     const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return `${formatted} €`;
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "PAID":
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case "OVERDUE":
-        return <AlertCircle className="h-5 w-5 text-red-500" />
+        return <AlertCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Clock className="h-5 w-5 text-yellow-500" />
+        return <Clock className="h-5 w-5 text-yellow-500" />;
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAID":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-green-100 text-green-800 border-green-200";
       case "OVERDUE":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
     }
-  }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "SUBSCRIPTION":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "TAX":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "INSTALLMENT":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "OTHER":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   // Since server has already filtered, we just use the payments directly
   // But we still need client-side pagination for performance
-  const totalPages = Math.ceil(payments.length / paymentsPerPage)
-  const startIndex = (currentPage - 1) * paymentsPerPage
-  const paginatedPayments = payments.slice(startIndex, startIndex + paymentsPerPage)
+  const totalPages = Math.ceil(payments.length / paymentsPerPage);
+  const startIndex = (currentPage - 1) * paymentsPerPage;
+  const paginatedPayments = payments.slice(
+    startIndex,
+    startIndex + paymentsPerPage,
+  );
 
   // Get unique years from all payments (not filtered by current year selection)
-  const availableYears = useAvailableYears()
+  const availableYears = useAvailableYears();
 
   // Reset to first page when filters change
   useEffect(() => {
-    setCurrentPage(1)
-  }, [filter, yearFilter])
+    setCurrentPage(1);
+  }, [filter, yearFilter]);
 
-  const currentMonthPayments = payments.filter(payment => {
-    const dueDate = new Date(payment.dueDate)
-    const now = new Date()
-    return dueDate >= startOfMonth(now) && dueDate <= endOfMonth(now)
-  })
+  const currentMonthPayments = payments.filter((payment) => {
+    const dueDate = new Date(payment.dueDate);
+    const now = new Date();
+    return dueDate >= startOfMonth(now) && dueDate <= endOfMonth(now);
+  });
 
-  const upcomingPayments = payments.filter(payment => {
-    const dueDate = new Date(payment.dueDate)
-    const now = new Date()
-    return isAfter(dueDate, now) && payment.status === "PENDING"
-  })
+  const upcomingPayments = payments.filter((payment) => {
+    const dueDate = new Date(payment.dueDate);
+    const now = new Date();
+    return isAfter(dueDate, now) && payment.status === "PENDING";
+  });
 
-  const overduePayments = payments.filter(payment => payment.status === "OVERDUE")
+  const overduePayments = payments.filter(
+    (payment) => payment.status === "OVERDUE",
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Pagamenti</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Pagamenti</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             I pagamenti vengono generati automaticamente dai tuoi abbonamenti
           </p>
         </div>
-        <Button 
+        <Button
           onClick={refreshPayments}
           disabled={generatingPayments}
           variant="outline"
           size="sm"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
         >
-          <RefreshCw className={`h-4 w-4 ${generatingPayments ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${generatingPayments ? "animate-spin" : ""}`}
+          />
           {generatingPayments ? "Aggiornamento..." : "Aggiorna"}
         </Button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Questo Mese</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Questo Mese</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{currentMonthPayments.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">
+              {currentMonthPayments.length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(currentMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0))} totale
+              {formatCurrency(
+                currentMonthPayments.reduce(
+                  (sum, p) => sum + Number(p.amount),
+                  0,
+                ),
+              )}{" "}
+              totale
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Arrivo</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">In Arrivo</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{upcomingPayments.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{upcomingPayments.length}</div>
             <p className="text-xs text-muted-foreground">
               Pagamenti in sospeso
             </p>
@@ -271,13 +315,18 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Ritardo</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">In Ritardo</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{overduePayments.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-600">
+              {overduePayments.length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {formatCurrency(overduePayments.reduce((sum, p) => sum + Number(p.amount), 0))} totale
+              {formatCurrency(
+                overduePayments.reduce((sum, p) => sum + Number(p.amount), 0),
+              )}{" "}
+              totale
             </p>
           </CardContent>
         </Card>
@@ -287,28 +336,28 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
       <div className="space-y-4">
         {/* Status Filters */}
         <div className="flex gap-2 flex-wrap">
-          <Button 
+          <Button
             variant={filter === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("all")}
           >
             Tutti
           </Button>
-          <Button 
+          <Button
             variant={filter === "pending" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("pending")}
           >
             In Sospeso
           </Button>
-          <Button 
+          <Button
             variant={filter === "paid" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("paid")}
           >
             Pagato
           </Button>
-          <Button 
+          <Button
             variant={filter === "overdue" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("overdue")}
@@ -319,22 +368,22 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
 
         {/* Year Filters */}
         <div className="flex gap-2 flex-wrap">
-          <Button 
+          <Button
             variant={parsedYearFilter === "current" ? "default" : "outline"}
             size="sm"
             onClick={() => setYearFilter("current")}
           >
             Corrente e Prossimo ({currentYear}-{nextYear})
           </Button>
-          <Button 
+          <Button
             variant={parsedYearFilter === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setYearFilter("all")}
           >
             Tutti gli Anni
           </Button>
-          {availableYears.map(year => (
-            <Button 
+          {availableYears.map((year) => (
+            <Button
               key={year}
               variant={parsedYearFilter === year ? "default" : "outline"}
               size="sm"
@@ -351,16 +400,21 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Euro className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun pagamento trovato</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Nessun pagamento trovato
+            </h3>
             <p className="text-sm text-gray-500 text-center mb-4">
-              {filter === "all" 
+              {filter === "all"
                 ? "I pagamenti appariranno qui automaticamente quando crei abbonamenti."
-                : `Nessun pagamento ${filter === 'pending' ? 'in sospeso' : filter === 'paid' ? 'pagato' : filter === 'overdue' ? 'in ritardo' : filter} al momento.`}
+                : `Nessun pagamento ${filter === "pending" ? "in sospeso" : filter === "paid" ? "pagato" : filter === "overdue" ? "in ritardo" : filter} al momento.`}
             </p>
             {filter === "all" && (
               <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                 <Info className="h-4 w-4" />
-                <span>I pagamenti vengono generati automaticamente dagli abbonamenti attivi</span>
+                <span>
+                  I pagamenti vengono generati automaticamente dagli abbonamenti
+                  attivi
+                </span>
               </div>
             )}
           </CardContent>
@@ -368,9 +422,105 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
       ) : (
         <div className="space-y-4">
           {paginatedPayments.map((payment) => (
-            <Card key={payment.id} className={`border-l-4 ${getStatusColor(payment.status)}`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            <Card
+              key={payment.id}
+              className={`border-l-4 ${getStatusColor(payment.status)}`}
+            >
+              <CardContent className="p-4 sm:p-6">
+                {/* Mobile Layout */}
+                <div className="sm:hidden">
+                  <div className="space-y-3">
+                    {/* Top row: Icon, name, amount */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <div className="flex-shrink-0">
+                          {getStatusIcon(payment.status)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                            {payment.subscription.name}
+                          </h3>
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
+                              payment.subscription.type,
+                            )}`}
+                          >
+                            {payment.subscription.type}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900 ml-2">
+                        {formatCurrency(payment.amount)}
+                      </div>
+                    </div>
+                    
+                    {/* Middle row: Date info */}
+                    <div className="text-xs text-gray-500">
+                      <div className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        <span>
+                          Scade: {format(new Date(payment.dueDate), "dd/MM/yy")}
+                        </span>
+                        {payment.paidDate && (
+                          <span className="ml-2">
+                            • Pagato {format(new Date(payment.paidDate), "dd/MM/yy")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Bottom row: Status and action button */}
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          payment.status,
+                        )}`}
+                      >
+                        {payment.status === "PAID" ? "PAGATO" : 
+                         payment.status === "OVERDUE" ? "SCADUTO" : "ATTESA"}
+                      </span>
+
+                      {payment.status === "PENDING" ||
+                      payment.status === "OVERDUE" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => markAsPaid(payment.id)}
+                          disabled={loadingPayments.has(payment.id)}
+                          className="h-7 text-xs"
+                        >
+                          {loadingPayments.has(payment.id) ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ...
+                            </>
+                          ) : (
+                            "Segna Pagato"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => markAsUnpaid(payment.id)}
+                          disabled={loadingPayments.has(payment.id)}
+                          className="h-7 text-xs"
+                        >
+                          {loadingPayments.has(payment.id) ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ...
+                            </>
+                          ) : (
+                            "Annulla"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden sm:flex sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-4">
                     {getStatusIcon(payment.status)}
                     <div className="flex-1 min-w-0">
@@ -380,7 +530,7 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                         </h3>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
-                            payment.subscription.type
+                            payment.subscription.type,
                           )}`}
                         >
                           {payment.subscription.type}
@@ -393,12 +543,21 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                         </div>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span>Scadenza: {format(new Date(payment.dueDate), "dd MMM yyyy")}</span>
+                          <span>
+                            Scadenza:{" "}
+                            {format(new Date(payment.dueDate), "dd MMM yyyy")}
+                          </span>
                         </div>
                         {payment.paidDate && (
                           <div className="flex items-center">
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            <span>Paid: {format(new Date(payment.paidDate), "MMM dd, yyyy")}</span>
+                            <span>
+                              Pagato:{" "}
+                              {format(
+                                new Date(payment.paidDate),
+                                "dd MMM yyyy",
+                              )}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -408,13 +567,14 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                   <div className="flex items-center space-x-2">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                        payment.status
+                        payment.status,
                       )}`}
                     >
                       {payment.status}
                     </span>
 
-                    {payment.status === "PENDING" || payment.status === "OVERDUE" ? (
+                    {payment.status === "PENDING" ||
+                    payment.status === "OVERDUE" ? (
                       <Button
                         size="sm"
                         onClick={() => markAsPaid(payment.id)}
@@ -442,7 +602,7 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
                             Segnando...
                           </>
                         ) : (
-                          "Mark as Unpaid"
+                          "Segna Non Pagato"
                         )}
                       </Button>
                     )}
@@ -454,47 +614,105 @@ export default function PaymentsView({ payments, onRefresh, initialFilters }: Pa
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {startIndex + 1} to {Math.min(startIndex + paymentsPerPage, payments.length)} of {payments.length} payments
+            <div className="space-y-3">
+              {/* Mobile pagination info */}
+              <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+                {startIndex + 1}-{Math.min(startIndex + paymentsPerPage, payments.length)} di {payments.length}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="w-8 h-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  ))}
+              
+              {/* Mobile pagination controls */}
+              <div className="sm:hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex-1"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Prec
+                  </Button>
+                  
+                  <div className="flex items-center gap-1 px-2">
+                    <span className="text-sm font-medium">
+                      {currentPage}
+                    </span>
+                    <span className="text-sm text-gray-400">di</span>
+                    <span className="text-sm text-gray-600">
+                      {totalPages}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex-1"
+                  >
+                    Succ
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              </div>
+              
+              {/* Desktop pagination controls */}
+              <div className="hidden sm:flex sm:items-center sm:justify-between">
+                <div className="text-sm text-gray-500">
+                  Showing {startIndex + 1} to{" "}
+                  {Math.min(startIndex + paymentsPerPage, payments.length)} of{" "}
+                  {payments.length} payments
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else {
+                        const start = Math.max(1, currentPage - 2);
+                        const end = Math.min(totalPages, start + 4);
+                        pageNumber = start + i;
+                        if (pageNumber > end) return null;
+                      }
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={currentPage === pageNumber ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
+                    }).filter(Boolean)}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }
