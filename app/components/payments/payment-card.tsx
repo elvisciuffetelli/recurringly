@@ -12,17 +12,20 @@ import {
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
+import { useNotifications } from "../providers/notification-provider";
 import type { Payment } from "./types";
 
 interface PaymentCardProps {
   payment: Payment;
   onRefresh?: () => void;
+  allPayments?: Payment[];
 }
 
-export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
+export default function PaymentCard({ payment, onRefresh, allPayments }: PaymentCardProps) {
   const [loadingPayments, setLoadingPayments] = useState<Set<string>>(
     new Set(),
   );
+  const { checkPaymentNotifications } = useNotifications();
   
   const [localPayment, setLocalPayment] = useState(payment);
   
@@ -102,6 +105,14 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
         setLocalPayment(payment);
         console.error("Impossibile segnare il pagamento come pagato");
       } else {
+        // Refresh notifications after successful payment update
+        if (allPayments) {
+          const updatedPayments = allPayments.map(p => 
+            p.id === paymentId ? { ...p, status: "PAID" as const, paidDate: new Date().toISOString() } : p
+          );
+          checkPaymentNotifications(updatedPayments);
+        }
+        
         // Optionally trigger refresh for other components
         if (onRefresh) {
           onRefresh();
@@ -151,6 +162,14 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
           errorData,
         );
       } else {
+        // Refresh notifications after successful payment update
+        if (allPayments) {
+          const updatedPayments = allPayments.map(p => 
+            p.id === paymentId ? { ...p, status: "PENDING" as const, paidDate: null } : p
+          );
+          checkPaymentNotifications(updatedPayments);
+        }
+        
         // Optionally trigger refresh for other components
         if (onRefresh) {
           onRefresh();

@@ -35,7 +35,22 @@ export async function GET() {
       (sub) => sub.status === "ACTIVE",
     );
 
+    const currentDate = new Date();
+    const nextYear = new Date(currentDate);
+    nextYear.setFullYear(currentDate.getFullYear() + 1);
+
+    // Calculate monthly total (average recurring monthly cost over next 12 months, excluding ONE_TIME)
     const monthlyTotal = activeSubscriptions.reduce((total, sub) => {
+      // Skip subscription if it has already ended
+      if (sub.endDate && new Date(sub.endDate) < currentDate) {
+        return total;
+      }
+
+      // Skip ONE_TIME payments from monthly recurring total
+      if (sub.frequency === "ONE_TIME") {
+        return total;
+      }
+
       let monthlyAmount = Number(sub.amount);
 
       switch (sub.frequency) {
@@ -48,16 +63,75 @@ export async function GET() {
         case "WEEKLY":
           monthlyAmount = monthlyAmount * 4.33; // Average weeks per month
           break;
-        case "ONE_TIME":
-          monthlyAmount = 0; // Don't include one-time payments in monthly total
-          break;
         // MONTHLY is already correct
+      }
+
+      // If subscription has an end date within next 12 months, 
+      // calculate the average monthly cost over the full 12 months
+      if (sub.endDate) {
+        const endDate = new Date(sub.endDate);
+        if (endDate <= nextYear) {
+          // Calculate how many months this subscription will be active
+          const monthsDiff = (endDate.getFullYear() - currentDate.getFullYear()) * 12 + 
+                           (endDate.getMonth() - currentDate.getMonth()) + 1; // +1 to include current month
+          const monthsActive = Math.max(0, Math.min(monthsDiff, 12));
+          
+          // Average the cost over 12 months
+          monthlyAmount = (monthlyAmount * monthsActive) / 12;
+        }
       }
 
       return total + monthlyAmount;
     }, 0);
 
-    const yearlyTotal = monthlyTotal * 12;
+    // Calculate yearly total (actual cost for next 12 months, including ONE_TIME)
+    const yearlyTotal = activeSubscriptions.reduce((total, sub) => {
+      // Skip subscription if it has already ended
+      if (sub.endDate && new Date(sub.endDate) < currentDate) {
+        return total;
+      }
+
+      if (sub.frequency === "ONE_TIME") {
+        // For one-time payments, include full amount if it's due within next 12 months
+        if (sub.endDate) {
+          const endDate = new Date(sub.endDate);
+          if (endDate <= nextYear) {
+            return total + Number(sub.amount);
+          }
+        }
+        return total;
+      }
+
+      // For recurring subscriptions, calculate monthly equivalent
+      let monthlyAmount = Number(sub.amount);
+      switch (sub.frequency) {
+        case "YEARLY":
+          monthlyAmount = monthlyAmount / 12;
+          break;
+        case "QUARTERLY":
+          monthlyAmount = monthlyAmount / 3;
+          break;
+        case "WEEKLY":
+          monthlyAmount = monthlyAmount * 4.33;
+          break;
+        // MONTHLY is already correct
+      }
+
+      // Calculate how many months this subscription will be active in the next 12 months
+      let monthsActive = 12;
+      
+      if (sub.endDate) {
+        const endDate = new Date(sub.endDate);
+        if (endDate <= nextYear) {
+          // Calculate months between now and end date
+          const monthsDiff = (endDate.getFullYear() - currentDate.getFullYear()) * 12 + 
+                           (endDate.getMonth() - currentDate.getMonth()) + 1; // +1 to include current month
+          monthsActive = Math.max(0, Math.min(monthsDiff, 12));
+        }
+      }
+
+      return total + (monthlyAmount * monthsActive);
+    }, 0);
 
     // Calculate total by type
     const totalByType = activeSubscriptions.reduce(

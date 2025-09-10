@@ -77,7 +77,7 @@ export default function NotificationBell() {
     try {
       setSendingEmails(true);
 
-      const response = await fetch("/api/cron/daily-email-reminders", {
+      const response = await fetch("/api/cron/email-notifications", {
         method: "GET",
       });
 

@@ -56,7 +56,12 @@ export default function PaymentsView({
       ) : (
         <div className="space-y-4">
           {paginatedPayments.map((payment) => (
-            <PaymentCard key={payment.id} payment={payment} onRefresh={onRefresh} />
+            <PaymentCard 
+              key={payment.id} 
+              payment={payment} 
+              onRefresh={onRefresh}
+              allPayments={payments}
+            />
           ))}
 
           <PaymentsPagination

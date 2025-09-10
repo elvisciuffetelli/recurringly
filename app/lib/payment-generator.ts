@@ -12,6 +12,8 @@ import {
 
 export async function generatePaymentsForSubscription(subscriptionId: string) {
   try {
+    const startTime = Date.now();
+    
     // Get the subscription with existing payments
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
@@ -32,7 +34,7 @@ export async function generatePaymentsForSubscription(subscriptionId: string) {
       },
     });
 
-    const generatedPayments = [];
+    const paymentsToCreate = [];
     const currentDate = new Date();
     const subscriptionStartDate = new Date(subscription.startDate);
 
@@ -53,20 +55,17 @@ export async function generatePaymentsForSubscription(subscriptionId: string) {
       ? new Date(subscription.endDate)
       : null;
 
+    // Collect all payment data first
     while (
       isBefore(nextDueDate, generateUntilDate) &&
       (!subscriptionEndDate || isBefore(nextDueDate, subscriptionEndDate))
     ) {
-      // Create the payment (we've already cleared existing unpaid ones)
-      const payment = await prisma.payment.create({
-        data: {
-          subscriptionId: subscription.id,
-          amount: subscription.amount,
-          dueDate: nextDueDate,
-          status: isAfter(nextDueDate, currentDate) ? "PENDING" : "OVERDUE",
-        },
+      paymentsToCreate.push({
+        subscriptionId: subscription.id,
+        amount: subscription.amount,
+        dueDate: new Date(nextDueDate),
+        status: (isAfter(nextDueDate, currentDate) ? "PENDING" : "OVERDUE") as "PENDING" | "OVERDUE",
       });
-      generatedPayments.push(payment);
 
       // Calculate next due date based on frequency
       nextDueDate = getNextDueDate(nextDueDate, subscription.frequency);
@@ -77,7 +76,17 @@ export async function generatePaymentsForSubscription(subscriptionId: string) {
       }
     }
 
-    return generatedPayments;
+    // Create all payments in a single batch operation
+    if (paymentsToCreate.length > 0) {
+      await prisma.payment.createMany({
+        data: paymentsToCreate,
+      });
+    }
+
+    const endTime = Date.now();
+    console.log(`Generated ${paymentsToCreate.length} payments in ${endTime - startTime}ms`);
+
+    return paymentsToCreate;
   } catch (error) {
     console.error("Error generating payments for subscription:", error);
     return [];

@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 import { useRouter } from "next/navigation";
 
 interface Subscription {
@@ -40,6 +40,9 @@ export function useSubscriptions() {
       if (response.ok) {
         // Ricarica i dati delle sottoscrizioni
         mutate();
+        
+        // Invalida anche i dati della dashboard
+        globalMutate("/api/dashboard");
         
         // Forza un refresh dei dati server-side per aggiornare i pagamenti
         router.refresh();

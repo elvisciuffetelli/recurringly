@@ -71,24 +71,16 @@ export async function POST(request: NextRequest) {
         endDate: validatedData.endDate ? new Date(validatedData.endDate) : null,
         userId: session.user.id,
       },
-      include: {
-        payments: true,
-      },
     });
 
     // Automatically generate payments for the new subscription
     await generatePaymentsForSubscription(subscription.id);
 
-    // Fetch the updated subscription with generated payments
-    const updatedSubscription = await prisma.subscription.findUnique({
-      where: { id: subscription.id },
-      include: { payments: true },
-    });
-
     // Revalidate the home page to refresh all data including payments
     revalidatePath("/");
 
-    return NextResponse.json(updatedSubscription, { status: 201 });
+    // Return the subscription (payments will be fetched via other endpoints)
+    return NextResponse.json(subscription, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

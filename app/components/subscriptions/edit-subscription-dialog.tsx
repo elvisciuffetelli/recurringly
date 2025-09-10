@@ -126,6 +126,9 @@ export default function EditSubscriptionDialog({
         // Aggiorna i dati in cache
         mutate("/api/subscriptions");
         
+        // Invalida anche i dati della dashboard
+        mutate("/api/dashboard");
+        
         // Forza un refresh dei dati server-side per aggiornare i pagamenti
         router.refresh();
         
