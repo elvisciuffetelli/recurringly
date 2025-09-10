@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
@@ -8,6 +9,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    // Uncomment the next line to test error handling
+    // return NextResponse.json({ error: "Test error" }, { status: 500});
     const session = await getServerSession(authOptions);
     const { id } = await params;
 
@@ -38,6 +41,13 @@ export async function POST(
         subscription: true,
       },
     });
+
+    console.log("Payment updated:", payment.id, payment.status);
+
+    // Revalidate both tag and path
+    revalidateTag(`payments-${session.user.id}`);
+    revalidatePath("/");
+    console.log("Revalidated tag and path");
 
     return NextResponse.json(payment);
   } catch (error) {

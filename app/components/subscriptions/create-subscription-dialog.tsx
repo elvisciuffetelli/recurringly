@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -44,6 +45,7 @@ export default function CreateSubscriptionDialog({
   onOpenChange,
   onSuccess,
 }: CreateSubscriptionDialogProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -81,6 +83,10 @@ export default function CreateSubscriptionDialog({
       if (response.ok) {
         // Aggiorna i dati in cache
         mutate("/api/subscriptions");
+        
+        // Forza un refresh dei dati server-side per aggiornare i pagamenti
+        router.refresh();
+        
         // Reset form
         setFormData({
           name: "",

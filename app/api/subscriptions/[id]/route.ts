@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../lib/auth";
 import { prisma } from "../../../lib/prisma";
@@ -70,7 +71,10 @@ export async function PUT(
     }
 
     const body = await request.json();
+    console.log("Edit request body:", body);
+    
     const validatedData = updateSubscriptionSchema.parse(body);
+    console.log("Validated data:", validatedData);
 
     const existingSubscription = await prisma.subscription.findFirst({
       where: {
@@ -112,8 +116,14 @@ export async function PUT(
         include: { payments: true },
       });
 
+      // Revalidate the home page to refresh all data including payments
+      revalidatePath("/");
+
       return NextResponse.json(updatedSubscription);
     }
+
+    // Revalidate the home page to refresh all data including payments
+    revalidatePath("/");
 
     return NextResponse.json(subscription);
   } catch (error) {
@@ -158,9 +168,28 @@ export async function DELETE(
       );
     }
 
+    // First delete all payments related to this subscription
+    await prisma.payment.deleteMany({
+      where: { subscriptionId: id },
+    });
+
+    // Then delete the subscription
     await prisma.subscription.delete({
       where: { id: id },
     });
+
+    console.log("Deleted subscription and related payments:", id);
+
+    // Force a complete cache invalidation
+    revalidatePath("/", "layout");
+    revalidatePath("/", "page");
+    
+    // Also try tag-based revalidation if we had tags
+    try {
+      revalidateTag("payments");
+    } catch (e) {
+      // Tag might not exist, ignore
+    }
 
     return NextResponse.json({ message: "Subscription deleted successfully" });
   } catch (error) {

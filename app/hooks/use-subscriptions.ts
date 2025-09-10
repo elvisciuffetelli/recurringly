@@ -1,4 +1,5 @@
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
 
 interface Subscription {
   id: string;
@@ -24,6 +25,7 @@ interface Subscription {
 export function useSubscriptions() {
   const { data, error, isLoading, mutate } =
     useSWR<Subscription[]>("/api/subscriptions");
+  const router = useRouter();
 
   const deleteSubscription = async (id: string) => {
     if (!confirm("Sei sicuro di voler eliminare questo abbonamento?")) {
@@ -36,8 +38,11 @@ export function useSubscriptions() {
       });
 
       if (response.ok) {
-        // Ricarica i dati
+        // Ricarica i dati delle sottoscrizioni
         mutate();
+        
+        // Forza un refresh dei dati server-side per aggiornare i pagamenti
+        router.refresh();
       } else {
         console.error("Impossibile eliminare l'abbonamento");
       }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -83,6 +84,9 @@ export async function POST(request: NextRequest) {
       where: { id: subscription.id },
       include: { payments: true },
     });
+
+    // Revalidate the home page to refresh all data including payments
+    revalidatePath("/");
 
     return NextResponse.json(updatedSubscription, { status: 201 });
   } catch (error) {

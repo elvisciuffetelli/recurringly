@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../lib/auth";
 import { prisma } from "../../../lib/prisma";
@@ -94,6 +95,9 @@ export async function PUT(
         subscription: true,
       },
     });
+
+    // Revalidate the home page to refresh payments
+    revalidatePath("/");
 
     return NextResponse.json(payment);
   } catch (error) {

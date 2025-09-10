@@ -9,7 +9,7 @@ import {
   Euro,
   Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import type { Payment } from "./types";
@@ -23,6 +23,13 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
   const [loadingPayments, setLoadingPayments] = useState<Set<string>>(
     new Set(),
   );
+  
+  const [localPayment, setLocalPayment] = useState(payment);
+  
+  // Update local payment when prop changes
+  useEffect(() => {
+    setLocalPayment(payment);
+  }, [payment]);
 
   const formatCurrency = (amount: number) => {
     if (Number.isNaN(amount) || !Number.isFinite(amount)) {
@@ -70,6 +77,19 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
   };
 
   const markAsPaid = async (paymentId: string) => {
+    console.log("markAsPaid called for payment:", paymentId);
+    
+    // Optimistically update the local state
+    setLocalPayment(prev => {
+      const updated = {
+        ...prev,
+        status: "PAID" as const,
+        paidDate: new Date().toISOString(),
+      };
+      console.log("Updated local payment:", updated);
+      return updated;
+    });
+
     try {
       setLoadingPayments((prev) => new Set(prev).add(paymentId));
 
@@ -77,14 +97,19 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
         method: "POST",
       });
 
-      if (response.ok) {
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setLocalPayment(payment);
+        console.error("Impossibile segnare il pagamento come pagato");
+      } else {
+        // Optionally trigger refresh for other components
         if (onRefresh) {
           onRefresh();
         }
-      } else {
-        console.error("Impossibile segnare il pagamento come pagato");
       }
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalPayment(payment);
       console.error("Errore nel segnare il pagamento come pagato:", error);
     } finally {
       setLoadingPayments((prev) => {
@@ -96,6 +121,13 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
   };
 
   const markAsUnpaid = async (paymentId: string) => {
+    // Optimistically update the local state
+    setLocalPayment(prev => ({
+      ...prev,
+      status: "PENDING" as const,
+      paidDate: null,
+    }));
+
     try {
       setLoadingPayments((prev) => new Set(prev).add(paymentId));
 
@@ -110,18 +142,23 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
         }),
       });
 
-      if (response.ok) {
-        if (onRefresh) {
-          onRefresh();
-        }
-      } else {
+      if (!response.ok) {
+        // Revert optimistic update on error
+        setLocalPayment(payment);
         const errorData = await response.json();
         console.error(
           "Impossibile segnare il pagamento come non pagato:",
           errorData,
         );
+      } else {
+        // Optionally trigger refresh for other components
+        if (onRefresh) {
+          onRefresh();
+        }
       }
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalPayment(payment);
       console.error("Errore nel segnare il pagamento come non pagato:", error);
     } finally {
       setLoadingPayments((prev) => {
@@ -133,7 +170,7 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
   };
 
   return (
-    <Card className={`border-l-4 ${getStatusColor(payment.status)}`}>
+    <Card className={`border-l-4 ${getStatusColor(localPayment.status)}`}>
       <CardContent className="p-4 sm:p-6">
         {/* Mobile Layout */}
         <div className="sm:hidden">
@@ -142,23 +179,23 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-2 flex-1 min-w-0">
                 <div className="flex-shrink-0">
-                  {getStatusIcon(payment.status)}
+                  {getStatusIcon(localPayment.status)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-medium text-gray-900 truncate">
-                    {payment.subscription.name}
+                    {localPayment.subscription.name}
                   </h3>
                   <span
                     className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
-                      payment.subscription.type,
+                      localPayment.subscription.type,
                     )}`}
                   >
-                    {payment.subscription.type}
+                    {localPayment.subscription.type}
                   </span>
                 </div>
               </div>
               <div className="text-sm font-semibold text-gray-900 ml-2">
-                {formatCurrency(payment.amount)}
+                {formatCurrency(localPayment.amount)}
               </div>
             </div>
             
@@ -167,11 +204,11 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
               <div className="flex items-center">
                 <Calendar className="h-3 w-3 mr-1" />
                 <span>
-                  Scade: {format(new Date(payment.dueDate), "dd/MM/yy")}
+                  Scade: {format(new Date(localPayment.dueDate), "dd/MM/yy")}
                 </span>
-                {payment.paidDate && (
+                {localPayment.paidDate && (
                   <span className="ml-2">
-                    • Pagato {format(new Date(payment.paidDate), "dd/MM/yy")}
+                    • Pagato {format(new Date(localPayment.paidDate), "dd/MM/yy")}
                   </span>
                 )}
               </div>
@@ -181,22 +218,22 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
             <div className="flex items-center justify-between">
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                  payment.status,
+                  localPayment.status,
                 )}`}
               >
-                {payment.status === "PAID" ? "PAGATO" : 
-                 payment.status === "OVERDUE" ? "SCADUTO" : "ATTESA"}
+                {localPayment.status === "PAID" ? "PAGATO" : 
+                 localPayment.status === "OVERDUE" ? "SCADUTO" : "ATTESA"}
               </span>
 
-              {payment.status === "PENDING" ||
-              payment.status === "OVERDUE" ? (
+              {localPayment.status === "PENDING" ||
+              localPayment.status === "OVERDUE" ? (
                 <Button
                   size="sm"
-                  onClick={() => markAsPaid(payment.id)}
-                  disabled={loadingPayments.has(payment.id)}
+                  onClick={() => markAsPaid(localPayment.id)}
+                  disabled={loadingPayments.has(localPayment.id)}
                   className="h-7 text-xs"
                 >
-                  {loadingPayments.has(payment.id) ? (
+                  {loadingPayments.has(localPayment.id) ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       ...
@@ -209,11 +246,11 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => markAsUnpaid(payment.id)}
-                  disabled={loadingPayments.has(payment.id)}
+                  onClick={() => markAsUnpaid(localPayment.id)}
+                  disabled={loadingPayments.has(localPayment.id)}
                   className="h-7 text-xs"
                 >
-                  {loadingPayments.has(payment.id) ? (
+                  {loadingPayments.has(localPayment.id) ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       ...
@@ -230,38 +267,38 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
         {/* Desktop Layout */}
         <div className="hidden sm:flex sm:items-center sm:justify-between">
           <div className="flex items-center space-x-4">
-            {getStatusIcon(payment.status)}
+            {getStatusIcon(localPayment.status)}
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-3 mb-2">
                 <h3 className="text-lg font-medium text-gray-900 truncate">
-                  {payment.subscription.name}
+                  {localPayment.subscription.name}
                 </h3>
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(
-                    payment.subscription.type,
+                    localPayment.subscription.type,
                   )}`}
                 >
-                  {payment.subscription.type}
+                  {localPayment.subscription.type}
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
                 <div className="flex items-center">
                   <Euro className="h-4 w-4 mr-1" />
-                  <span>{formatCurrency(payment.amount)}</span>
+                  <span>{formatCurrency(localPayment.amount)}</span>
                 </div>
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   <span>
                     Scadenza:{" "}
-                    {format(new Date(payment.dueDate), "dd MMM yyyy")}
+                    {format(new Date(localPayment.dueDate), "dd MMM yyyy")}
                   </span>
                 </div>
-                {payment.paidDate && (
+                {localPayment.paidDate && (
                   <div className="flex items-center">
                     <CheckCircle className="h-4 w-4 mr-1" />
                     <span>
                       Pagato:{" "}
-                      {format(new Date(payment.paidDate), "dd MMM yyyy")}
+                      {format(new Date(localPayment.paidDate), "dd MMM yyyy")}
                     </span>
                   </div>
                 )}
@@ -272,20 +309,20 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
           <div className="flex items-center space-x-2">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                payment.status,
+                localPayment.status,
               )}`}
             >
-              {payment.status}
+              {localPayment.status}
             </span>
 
-            {payment.status === "PENDING" ||
-            payment.status === "OVERDUE" ? (
+            {localPayment.status === "PENDING" ||
+            localPayment.status === "OVERDUE" ? (
               <Button
                 size="sm"
-                onClick={() => markAsPaid(payment.id)}
-                disabled={loadingPayments.has(payment.id)}
+                onClick={() => markAsPaid(localPayment.id)}
+                disabled={loadingPayments.has(localPayment.id)}
               >
-                {loadingPayments.has(payment.id) ? (
+                {loadingPayments.has(localPayment.id) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Segnando...
@@ -298,10 +335,10 @@ export default function PaymentCard({ payment, onRefresh }: PaymentCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => markAsUnpaid(payment.id)}
-                disabled={loadingPayments.has(payment.id)}
+                onClick={() => markAsUnpaid(localPayment.id)}
+                disabled={loadingPayments.has(localPayment.id)}
               >
-                {loadingPayments.has(payment.id) ? (
+                {loadingPayments.has(localPayment.id) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Segnando...

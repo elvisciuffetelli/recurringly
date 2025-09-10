@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../lib/auth";
 import { prisma } from "../../../lib/prisma";
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
       );
       generatedCount += payments.length;
     }
+
+    // Revalidate the home page to refresh all data including payments
+    revalidatePath("/");
 
     return NextResponse.json({
       message: `Generated ${generatedCount} payments`,

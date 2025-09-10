@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -58,6 +59,7 @@ export default function EditSubscriptionDialog({
   onSuccess,
   subscription,
 }: EditSubscriptionDialogProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -94,14 +96,23 @@ export default function EditSubscriptionDialog({
     setLoading(true);
 
     try {
-      const payload = {
-        ...formData,
+      // Costruiamo il payload omettendo campi vuoti
+      const payload: any = {
+        name: formData.name,
+        type: formData.type,
         amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        frequency: formData.frequency,
         startDate: new Date(formData.startDate).toISOString(),
-        endDate: formData.endDate
-          ? new Date(formData.endDate).toISOString()
-          : null,
+        status: formData.status,
       };
+
+      // Aggiungi endDate solo se ha un valore
+      if (formData.endDate && formData.endDate.trim() !== '') {
+        payload.endDate = new Date(formData.endDate).toISOString();
+      }
+      
+      console.log("Edit payload:", payload);
 
       const response = await fetch(`/api/subscriptions/${subscription.id}`, {
         method: "PUT",
@@ -114,6 +125,10 @@ export default function EditSubscriptionDialog({
       if (response.ok) {
         // Aggiorna i dati in cache
         mutate("/api/subscriptions");
+        
+        // Forza un refresh dei dati server-side per aggiornare i pagamenti
+        router.refresh();
+        
         onOpenChange(false);
         onSuccess();
       } else {
