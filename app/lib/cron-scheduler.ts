@@ -17,6 +17,18 @@ class CronScheduler {
         console.log("📧 Running email notification cron job...");
 
         try {
+          // First, update payment statuses to mark overdue payments
+          const updateResponse = await fetch(
+            `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/payments/update-overdue`,
+          );
+
+          if (updateResponse.ok) {
+            const updateResult = await updateResponse.json();
+            console.log("📅 Updated payment statuses:", updateResult.message);
+          } else {
+            console.error("❌ Failed to update payment statuses");
+          }
+
           // Call our API endpoint to process all email notifications
           const response = await fetch(
             `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/cron/email-notifications`,

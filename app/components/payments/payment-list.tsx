@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isBefore } from "date-fns";
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { usePayments } from "../../hooks/use-payments";
 import { Button } from "../ui/button";
@@ -17,6 +17,20 @@ export default function PaymentList() {
     // Simple deterministic formatting to avoid hydration issues
     const formatted = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return `${formatted} €`;
+  };
+
+  const getActualStatus = (payment: any) => {
+    if (payment.status === "PAID") {
+      return "PAID";
+    }
+    if (payment.status === "OVERDUE") {
+      return "OVERDUE";
+    }
+    // Check if PENDING payment is actually overdue
+    if (payment.status === "PENDING" && isBefore(new Date(payment.dueDate), new Date())) {
+      return "OVERDUE";
+    }
+    return "PENDING";
   };
 
   const getStatusIcon = (status: string) => {
@@ -75,7 +89,9 @@ export default function PaymentList() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {payments.map((payment) => (
+      {payments.map((payment) => {
+        const actualStatus = getActualStatus(payment);
+        return (
         <Card key={payment.id}>
           <CardContent className="p-4 sm:p-6">
             {/* Mobile Layout */}
@@ -86,7 +102,7 @@ export default function PaymentList() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      {getStatusIcon(payment.status)}
+                      {getStatusIcon(actualStatus)}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
@@ -111,19 +127,19 @@ export default function PaymentList() {
                   </p>
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      payment.status,
+                      actualStatus,
                     )}`}
                   >
-                    {payment.status === "PAID" ? "OK" : 
-                     payment.status === "OVERDUE" ? "SCADUTO" : "ATTESA"}
+                    {actualStatus === "PAID" ? "OK" :
+                     actualStatus === "OVERDUE" ? "SCADUTO" : "ATTESA"}
                   </span>
                 </div>
                 
-                {/* Action button - full width if pending */}
-                {payment.status === "PENDING" && (
+                {/* Action button - full width if pending or overdue */}
+                {(actualStatus === "PENDING" || actualStatus === "OVERDUE") && (
                   <div className="pt-2">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={() => markAsPaid(payment.id)}
                       className="w-full h-8 text-xs"
                     >
@@ -138,7 +154,7 @@ export default function PaymentList() {
             <div className="hidden sm:flex sm:items-center sm:justify-between">
               <div className="flex items-start space-x-4 flex-1">
                 <div className="flex-shrink-0">
-                  {getStatusIcon(payment.status)}
+                  {getStatusIcon(actualStatus)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-medium text-gray-900 truncate">
@@ -162,14 +178,14 @@ export default function PaymentList() {
                   </p>
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                      payment.status,
+                      actualStatus,
                     )}`}
                   >
-                    {payment.status}
+                    {actualStatus}
                   </span>
                 </div>
 
-                {payment.status === "PENDING" && (
+                {(actualStatus === "PENDING" || actualStatus === "OVERDUE") && (
                   <Button size="sm" onClick={() => markAsPaid(payment.id)}>
                     Segna come Pagato
                   </Button>
@@ -178,7 +194,8 @@ export default function PaymentList() {
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 }
