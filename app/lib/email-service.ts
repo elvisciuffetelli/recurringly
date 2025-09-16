@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 interface Payment {
   id: string;
@@ -21,27 +21,10 @@ interface EmailNotificationData {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor() {
-    // Configure your email service here
-    // For development, you can use Gmail, SendGrid, or Resend
-    this.transporter = nodemailer.createTransport({
-      // Gmail configuration (you'll need to use App Password)
-      service: "gmail",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-      // Alternative: Use SMTP configuration
-      // host: process.env.SMTP_HOST,
-      // port: parseInt(process.env.SMTP_PORT || '587'),
-      // secure: false,
-      // auth: {
-      //   user: process.env.SMTP_USER,
-      //   pass: process.env.SMTP_PASSWORD,
-      // },
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
   private formatCurrency(amount: number) {
@@ -277,20 +260,16 @@ class EmailService {
     try {
       const template = this.getEmailTemplate(data);
 
-      const mailOptions = {
-        from: {
-          name: "Recurringly",
-          address: process.env.SMTP_USER || "noreply@mysubscriptions.app",
-        },
+      const result = await this.resend.emails.send({
+        from: "Recurringly <onboarding@resend.dev>",
         to: data.userEmail,
         subject: template.subject,
         html: template.html,
-      };
+      });
 
-      const result = await this.transporter.sendMail(mailOptions);
       console.log(
         `Email inviata con successo a ${data.userEmail}:`,
-        result.messageId,
+        result.data?.id,
       );
       return true;
     } catch (error) {
@@ -299,16 +278,6 @@ class EmailService {
     }
   }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      await this.transporter.verify();
-      console.log("Connessione servizio email verificata");
-      return true;
-    } catch (error) {
-      console.error("Connessione servizio email fallita:", error);
-      return false;
-    }
-  }
 }
 
 export const emailService = new EmailService();
