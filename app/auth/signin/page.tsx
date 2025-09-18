@@ -1,8 +1,9 @@
 "use client";
 
+import { getSession, signIn } from "next-auth/react";
+import { useQueryState } from "nuqs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getSession, signIn } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import {
@@ -17,12 +18,40 @@ import { Label } from "../../components/ui/label";
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const router = useRouter();
+  const [urlError] = useQueryState("error");
+
+  // Handle URL errors with nuqs
+  const getErrorMessage = (errorCode: string | null) => {
+    if (!errorCode) return "";
+
+    switch (errorCode) {
+      case "OAuthAccountNotLinked":
+        return "Un account con questa email esiste già. Prova ad accedere con email e password, oppure usa un'altra email Google.";
+      case "OAuthSignin":
+        return "Errore durante l'accesso con Google. Riprova.";
+      case "OAuthCallback":
+        return "Errore di callback OAuth. Verifica la configurazione.";
+      case "OAuthCreateAccount":
+        return "Impossibile creare l'account. Riprova o contatta il supporto.";
+      case "EmailCreateAccount":
+        return "Impossibile creare l'account con questa email.";
+      case "Callback":
+        return "Errore di callback durante l'autenticazione.";
+      case "Default":
+        return "Si è verificato un errore durante l'accesso. Riprova.";
+      default:
+        return "Si è verificato un errore sconosciuto. Riprova.";
+    }
+  };
+
+  const displayError = error || getErrorMessage(urlError);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +82,28 @@ export default function SignIn() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/" });
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setError("");
+
+    try {
+      const result = await signIn("google", {
+        callbackUrl: "/",
+        redirect: false
+      });
+
+      if (result?.error) {
+        setError("Errore durante l'accesso con Google. Riprova.");
+      } else if (result?.url) {
+        // Redirect manually if successful
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      setError("Si è verificato un errore durante l'accesso con Google.");
+      console.error("Google sign-in error:", error);
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -92,8 +141,8 @@ export default function SignIn() {
                 required
               />
             </div>
-            {error && (
-              <div className="text-sm text-red-600 text-center">{error}</div>
+            {displayError && (
+              <div className="text-sm text-red-600 text-center">{displayError}</div>
             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Accesso in corso..." : "Accedi"}
@@ -115,16 +164,17 @@ export default function SignIn() {
             variant="outline"
             className="w-full"
             onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading || isLoading}
             type="button"
           >
-            Accedi con Google
+            {isGoogleLoading ? "Accesso con Google in corso..." : "Accedi con Google"}
           </Button>
 
           <div className="text-center text-sm">
             Non hai un account?{" "}
             <Link
               href="/auth/register"
-              className="text-primary hover:underline"
+              className="text-primary hover:underline cursor-pointer"
             >
               Registrati
             </Link>

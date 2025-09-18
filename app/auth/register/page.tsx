@@ -178,7 +178,7 @@ export default function Register() {
 
           <div className="text-center text-sm">
             Hai già un account?{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline">
+            <Link href="/auth/signin" className="text-primary hover:underline cursor-pointer">
               Accedi
             </Link>
           </div>
