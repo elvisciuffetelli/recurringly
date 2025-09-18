@@ -1,6 +1,8 @@
 import { format } from "date-fns";
 import { Resend } from "resend";
 
+const resendApiKey = process.env.RESEND_API_KEY || "fake_key_for_build";
+
 interface Payment {
   id: string;
   amount: number;
@@ -24,7 +26,7 @@ class EmailService {
   private resend: Resend;
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    this.resend = new Resend(resendApiKey);
   }
 
   private formatCurrency(amount: number) {
